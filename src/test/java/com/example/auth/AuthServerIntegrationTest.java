@@ -1,21 +1,45 @@
 package com.example.auth;
 
+import com.gargoylesoftware.htmlunit.Page;
+import com.gargoylesoftware.htmlunit.WebClient;
+import com.gargoylesoftware.htmlunit.WebResponse;
+import com.gargoylesoftware.htmlunit.html.HtmlButton;
+import com.gargoylesoftware.htmlunit.html.HtmlInput;
+import com.gargoylesoftware.htmlunit.html.HtmlPage;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.io.IOException;
+
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 public class AuthServerIntegrationTest {
 
+    @LocalServerPort
+    private int port;
+
     @Autowired
     private MockMvc mockMvc;
+
+    private WebClient webClient;
+
+    @BeforeEach
+    public void setUp() {
+        webClient = new WebClient();
+        webClient.getOptions().setThrowExceptionOnFailingStatusCode(false);
+        webClient.getOptions().setRedirectEnabled(true);
+        webClient.getCookieManager().clearCookies();
+    }
 
     @Test
     public void performHealthCheck() throws Exception {
@@ -41,5 +65,54 @@ public class AuthServerIntegrationTest {
                 .queryParam("code_challenge_method", "S256"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("http://localhost/login"));
+    }
+
+    @Test
+    public void performFullAuthenticationFlow() throws IOException {
+        String authorizationRequestUri = "http://localhost:" + port + "/oauth2/authorize?" +
+                "response_type=code&" +
+                "client_id=frontend-client&" +
+                "scope=openid&" +
+                "redirect_uri=http://localhost:5173&" +
+                "state=state&" +
+                "code_challenge=QYPAZ5NU8yvtlQ9erY0JnaFPZRYIvpSJDOELq7i67og&" +
+                "code_challenge_method=S256";
+
+        // Enable redirects to reach the login page
+        webClient.getOptions().setRedirectEnabled(true);
+        HtmlPage loginPage = webClient.getPage(authorizationRequestUri);
+
+        // Assert we are on the login page
+        assertThat(loginPage.getUrl().toString()).contains("/login");
+
+        HtmlInput usernameInput = loginPage.querySelector("input[name='username']");
+        HtmlInput passwordInput = loginPage.querySelector("input[name='password']");
+        HtmlButton signInButton = loginPage.querySelector("button");
+
+        usernameInput.type("admin");
+        passwordInput.type("admin");
+
+        // Disable redirects to prevent attempting to connect to localhost:5173
+        webClient.getOptions().setRedirectEnabled(false);
+
+        // Submit the login form
+        Page pageAfterLogin = signInButton.click();
+        WebResponse responseAfterLogin = pageAfterLogin.getWebResponse();
+
+        // The response should be a redirect back to the authorization endpoint
+        assertThat(responseAfterLogin.getStatusCode()).isEqualTo(302);
+        String location = responseAfterLogin.getResponseHeaderValue("Location");
+
+        // Manually follow the redirect to the authorization endpoint
+        Page authResponse = webClient.getPage(location);
+        WebResponse finalResponse = authResponse.getWebResponse();
+
+        // The authorization endpoint should redirect to the client application
+        assertThat(finalResponse.getStatusCode()).isEqualTo(302);
+        String finalLocation = finalResponse.getResponseHeaderValue("Location");
+
+        // Verify the final redirect URL
+        assertThat(finalLocation).startsWith("http://localhost:5173");
+        assertThat(finalLocation).contains("code=");
     }
 }
