@@ -50,7 +50,9 @@ public class SecurityConfig {
   @Order(2)
   public SecurityFilterChain apiSecurityFilterChain(HttpSecurity http) throws Exception {
     http.cors(Customizer.withDefaults())
-        .authorizeHttpRequests(authorize -> authorize.anyRequest().authenticated())
+        .authorizeHttpRequests(authorize -> authorize
+            .requestMatchers("/actuator/**").permitAll()
+            .anyRequest().authenticated())
         .formLogin(Customizer.withDefaults());
     return http.build();
   }
