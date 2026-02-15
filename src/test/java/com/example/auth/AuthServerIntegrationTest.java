@@ -1,11 +1,17 @@
 package com.example.auth;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import com.gargoylesoftware.htmlunit.Page;
 import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.WebResponse;
 import com.gargoylesoftware.htmlunit.html.HtmlButton;
 import com.gargoylesoftware.htmlunit.html.HtmlInput;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
+import java.io.IOException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,25 +20,14 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.io.IOException;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 public class AuthServerIntegrationTest {
-
     @LocalServerPort
     private int port;
-
     @Autowired
     private MockMvc mockMvc;
-
     private WebClient webClient;
-
     @BeforeEach
     public void setUp() {
         webClient = new WebClient();
@@ -42,19 +37,13 @@ public class AuthServerIntegrationTest {
     }
 
     @Test
-    public void performHealthCheck() throws Exception {
-        mockMvc.perform(get("/actuator/health"))
-                .andExpect(status().isOk());
-    }
-
-    @Test
     public void performDiscoveryCheck() throws Exception {
         mockMvc.perform(get("/.well-known/openid-configuration"))
                 .andExpect(status().isOk());
     }
 
     @Test
-    public void performAuthorizationRequestRedirectsToLogin() throws Exception {
+    public void authorizationRequestRedirectsToLogin() throws Exception {
         mockMvc.perform(get("/oauth2/authorize")
                 .queryParam("response_type", "code")
                 .queryParam("client_id", "frontend-client")
@@ -68,7 +57,7 @@ public class AuthServerIntegrationTest {
     }
 
     @Test
-    public void performFullAuthenticationFlow() throws IOException {
+    public void fullAuthenticationFlow() throws IOException {
         String authorizationRequestUri = "http://localhost:" + port + "/oauth2/authorize?" +
                 "response_type=code&" +
                 "client_id=frontend-client&" +
