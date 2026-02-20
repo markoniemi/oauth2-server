@@ -28,7 +28,7 @@ import org.springframework.test.web.servlet.MvcResult;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
-public class AuthServerIntegrationTest {
+public class AuthServerIT {
 
     @LocalServerPort
     private int port;
