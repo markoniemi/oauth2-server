@@ -25,3 +25,6 @@ jobs:
       - name: Build with Maven
         run: mvn -B clean deploy
         working-directory: ./
+        env:
+          MAVEN_USERNAME: ${{ secrets.REPSY_USER }}
+          MAVEN_PASSWORD: ${{ secrets.REPSY_TOKEN }}
