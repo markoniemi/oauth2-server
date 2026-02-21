@@ -23,7 +23,7 @@ jobs:
           server-password: ${{ secrets.REPSY_TOKEN }}
 
       - name: Build with Maven
-        run: mvn -B clean deploy
+        run: mvn -X -e -B clean deploy
         working-directory: ./
         env:
           MAVEN_USERNAME: ${{ secrets.REPSY_USER }}
