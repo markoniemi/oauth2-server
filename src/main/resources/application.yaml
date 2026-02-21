@@ -2,9 +2,6 @@ spring:
   application:
     name: auth-server
   security:
-    user:
-      name: admin
-      password: admin
     oauth2:
       authorizationserver:
         issuer: http://localhost:9000
@@ -13,3 +10,16 @@ server:
   port: 9000
   servlet:
     context-path: /
+
+app:
+  security:
+    users:
+      - username: admin
+        password: 'admin'
+        roles:
+          - USER
+          - ADMIN
+      - username: user
+        password: 'user'
+        roles:
+          - USER

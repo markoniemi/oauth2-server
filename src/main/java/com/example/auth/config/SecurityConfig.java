@@ -2,6 +2,7 @@ package com.example.auth.config;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -58,11 +59,16 @@ public class SecurityConfig {
   }
 
   @Bean
-  public UserDetailsService userDetailsService() {
-    UserDetails user =
-        User.builder().username("admin").password("admin").authorities("ROLE_USER").build();
+  public UserDetailsService userDetailsService(SecurityProperties securityProperties) {
+    List<UserDetails> users = securityProperties.getUsers().stream()
+        .map(u -> User.builder()
+            .username(u.getUsername())
+            .password(u.getPassword())
+            .roles(u.getRoles().toArray(new String[0]))
+            .build())
+        .collect(Collectors.toList());
 
-    return new InMemoryUserDetailsManager(user);
+    return new InMemoryUserDetailsManager(users);
   }
 
   @Bean
