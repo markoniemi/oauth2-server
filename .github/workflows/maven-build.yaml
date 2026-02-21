@@ -18,6 +18,9 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '21'
+          server-id: repsy
+          server-username: ${{ secrets.REPSY_USER }}
+          server-password: ${{ secrets.REPSY_TOKEN }}
 
       - name: Build with Maven
         run: mvn -B clean install
