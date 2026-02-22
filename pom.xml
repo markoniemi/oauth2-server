@@ -106,15 +106,7 @@
                         <image>gcr.io/distroless/java21-debian12</image>
                     </from>
                     <to>
-                        <image>repo.repsy.io/markoniemi/markoniemi/auth-server</image>
-<!--                        <tags>-->
-<!--                            <tag>${project.version}</tag>-->
-<!--                            <tag>latest</tag>-->
-<!--                        </tags>-->
-<!--                        <auth>-->
-<!--                            <username>${env.DOCKER_USERNAME}</username>-->
-<!--                            <password>${env.DOCKER_PASSWORD}</password>-->
-<!--                        </auth>-->
+                        <image>repo.repsy.io/docker/markoniemi/auth-server</image>
                     </to>
                 </configuration>
                 <executions>
