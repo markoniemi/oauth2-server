@@ -12,8 +12,10 @@
         <relativePath/>
     </parent>
 
+
     <groupId>com.example</groupId>
     <artifactId>auth-server</artifactId>
+    <version>0.1-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>auth-server</name>
     <description>OAuth2 Test Server</description>
@@ -98,21 +100,21 @@
             <plugin>
                 <groupId>com.google.cloud.tools</groupId>
                 <artifactId>jib-maven-plugin</artifactId>
-                <version>3.4.0</version>
+                <version>3.5.1</version>
                 <configuration>
                     <from>
                         <image>gcr.io/distroless/java21-debian12</image>
                     </from>
                     <to>
-                        <image>repsy.io/markoniemi/auth-server</image>
-                        <tags>
-                            <tag>${project.version}</tag>
-                            <tag>latest</tag>
-                        </tags>
-                        <auth>
-                            <username>${env.MAVEN_USERNAME}</username>
-                            <password>${env.MAVEN_PASSWORD}</password>
-                        </auth>
+                        <image>repo.repsy.io/markoniemi/markoniemi/auth-server</image>
+<!--                        <tags>-->
+<!--                            <tag>${project.version}</tag>-->
+<!--                            <tag>latest</tag>-->
+<!--                        </tags>-->
+<!--                        <auth>-->
+<!--                            <username>${env.DOCKER_USERNAME}</username>-->
+<!--                            <password>${env.DOCKER_PASSWORD}</password>-->
+<!--                        </auth>-->
                     </to>
                 </configuration>
                 <executions>

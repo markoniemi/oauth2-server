@@ -18,12 +18,31 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '21'
-          server-id: repsy
-          server-username: MAVEN_USERNAME
-          server-password: MAVEN_PASSWORD
+
+      - name: Configure Maven Settings
+        run: |
+          mkdir -p ~/.m2
+          cat <<EOF > ~/.m2/settings.xml
+          <settings>
+            <servers>
+              <server>
+                <id>repsy</id>
+                <username>\${env.MAVEN_USERNAME}</username>
+                <password>\${env.MAVEN_PASSWORD}</password>
+              </server>
+              <server>
+                <id>second-server</id>
+                <username>\${env.DOCKER_USERNAME}</username>
+                <password>\${env.DOCKER_PASSWORD}</password>
+              </server>
+            </servers>
+          </settings>
+          EOF
 
       - name: Build with Maven
         run: mvn -batch-mode deploy
         env:
           MAVEN_USERNAME: ${{ secrets.REPSY_USER }}
           MAVEN_PASSWORD: ${{ secrets.REPSY_TOKEN }}
+          DOCKER_USERNAME: ${{ secrets.REPSY_DOCKER_USER }}
+          DOCKER_PASSWORD: ${{ secrets.REPSY_DOCKER_TOKEN }}
