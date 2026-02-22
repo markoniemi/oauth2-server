@@ -27,3 +27,17 @@ jobs:
         env:
           MAVEN_USERNAME: ${{ secrets.REPSY_USER }}
           MAVEN_PASSWORD: ${{ secrets.REPSY_TOKEN }}
+
+      - name: Log in to Repsy Docker Registry
+        uses: docker/login-action@v3
+        with:
+          registry: repsy.io
+          username: ${{ secrets.REPSY_USER }}
+          password: ${{ secrets.REPSY_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: repo.repsy.io/markoniemi/markoniemi/oauth2-server:latest
