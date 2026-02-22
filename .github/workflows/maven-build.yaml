@@ -31,7 +31,7 @@ jobs:
                 <password>\${env.MAVEN_PASSWORD}</password>
               </server>
               <server>
-                <id>second-server</id>
+                <id>repo.repsy.io</id>
                 <username>\${env.DOCKER_USERNAME}</username>
                 <password>\${env.DOCKER_PASSWORD}</password>
               </server>
