@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up JDK 21
         uses: actions/setup-java@v4
@@ -23,8 +23,7 @@ jobs:
           server-password: MAVEN_PASSWORD
 
       - name: Build with Maven
-        run: mvn -X -e -B clean deploy
-        working-directory: ./
+        run: mvn -X -e -batch-mode deploy
         env:
           MAVEN_USERNAME: ${{ secrets.REPSY_USER }}
           MAVEN_PASSWORD: ${{ secrets.REPSY_TOKEN }}
