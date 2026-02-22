@@ -104,15 +104,22 @@
                         <image>gcr.io/distroless/java21-debian12</image>
                     </from>
                     <to>
-                        <image>auth-server:latest</image>
+                        <image>repsy.io/markoniemi/auth-server</image>
+                        <tags>
+                            <tag>${project.version}</tag>
+                            <tag>latest</tag>
+                        </tags>
+                        <auth>
+                            <username>${env.MAVEN_USERNAME}</username>
+                            <password>${env.MAVEN_PASSWORD}</password>
+                        </auth>
                     </to>
                 </configuration>
                 <executions>
                     <execution>
-                        <id>package</id>
-                        <phase>package</phase>
+                        <phase>deploy</phase>
                         <goals>
-                            <goal>dockerBuild</goal>
+                            <goal>build</goal>
                         </goals>
                     </execution>
                 </executions>
