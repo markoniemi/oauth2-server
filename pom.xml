@@ -106,7 +106,7 @@
                         <image>gcr.io/distroless/java21-debian12</image>
                     </from>
                     <to>
-                        <image>repo.repsy.io/markoniemi/docker/auth-server</image>
+                        <image>ghcr.io/markoniemi/oauth2-server</image>
                     </to>
                 </configuration>
                 <executions>
@@ -147,8 +147,9 @@
 
     <distributionManagement>
         <repository>
-            <id>repsy</id>
-            <url>https://repo.repsy.io/mvn/markoniemi/maven</url>
+            <id>github</id>
+            <name>GitHub Packages</name>
+            <url>https://maven.pkg.github.com/markoniemi/oauth2-server</url>
         </repository>
     </distributionManagement>
 </project>
