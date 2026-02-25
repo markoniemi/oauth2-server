@@ -28,4 +28,6 @@ jobs:
             -Djib.to.image=ghcr.io/${{ github.repository }}:${{ github.sha }} \
             -Djib.to.auth.username=${{ github.actor }} \
             -Djib.to.auth.password=${{ secrets.GITHUB_TOKEN }} \
-            install jib:build        
+            -Djib.httpClient.connectTimeout=120000 \
+            -Djib.httpClient.readTimeout=120000 \
+            clean package jib:build -DskipTests        

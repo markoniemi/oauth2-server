@@ -27,6 +27,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven-compiler-plugin.version>3.11.0</maven-compiler-plugin.version>
         <testcontainers.version>2.0.3</testcontainers.version>
+        <image.registry>ghcr.io/markoniemi</image.registry>
     </properties>
 
     <dependencies>
@@ -106,7 +107,7 @@
                         <image>gcr.io/distroless/java21-debian12</image>
                     </from>
                     <to>
-                        <image>ghcr.io/markoniemi/oauth2-server</image>
+                        <image>${image.registry}/${project.artifactId}:latest</image>
                     </to>
                 </configuration>
             </plugin>
