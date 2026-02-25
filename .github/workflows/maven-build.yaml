@@ -22,12 +22,14 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
+      - name: Docker login to GitHub Container Registry
+        run: |
+          echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
       - name: Build with Maven
         run: |
-          mvn -B \
+          mvn -B clean package \
             -Djib.to.image=ghcr.io/${{ github.repository }}:${{ github.sha }} \
             -Djib.to.auth.username=${{ github.actor }} \
             -Djib.to.auth.password=${{ secrets.GITHUB_TOKEN }} \
-            -Djib.httpClient.connectTimeout=120000 \
-            -Djib.httpClient.readTimeout=120000 \
-            clean package jib:build -DskipTests        
+            jib:build -DskipTests        
