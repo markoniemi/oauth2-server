@@ -107,11 +107,7 @@
                         <image>gcr.io/distroless/java21-debian12</image>
                     </from>
                     <to>
-                        <image>${jib.to.image}</image>
-                        <auth>
-                            <username>${jib.to.auth.username}</username>
-                            <password>${jib.to.auth.password}</password>
-                        </auth>
+                        <image>ghcr.io/markoniemi/oauth2-server</image>
                     </to>
                     <container>
                         <jvmFlags>
