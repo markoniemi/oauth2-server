@@ -29,5 +29,4 @@ jobs:
         uses: MathieuSoysal/jib-container-publish.yml@v2.1.5
         with:
           registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: ${{ secrets.PACKAGE_UPDATE_TOKEN }}
