@@ -26,6 +26,6 @@ jobs:
         run: mvn -B install
 
       - name: JIB container build and publish
-        uses: MathieuSoysal/jib-container-publish.yml@v2.0.7
+        uses: MathieuSoysal/jib-container-publish.yml@v2.1.5
         with:
           PASSWORD: ${{ secrets.GITHUB_TOKEN }}
