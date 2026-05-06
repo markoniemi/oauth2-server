@@ -1,0 +1,8 @@
+{
+  "hooks": {
+    "read": {
+      "blocked_patterns": [".env", ".env.*"],
+      "blocked_message": "🚫 Reading .env files is not allowed for security reasons. These files may contain sensitive credentials and secrets."
+    }
+  }
+}

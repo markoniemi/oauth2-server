@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:www.moderne.ai)",
+      "WebFetch(domain:dev.to)",
+      "WebFetch(domain:www.baeldung.com)",
+      "WebFetch(domain:katyella.com)",
+      "WebFetch(domain:stevenpg.com)",
+      "WebFetch(domain:docs.openrewrite.org)",
+      "WebFetch(domain:ankurm.com)",
+      "WebFetch(domain:serdaralkancode.medium.com)",
+      "Bash(cp -r .claude/worktrees/oauth2-testcontainers/src/main/java/com/example/auth/testcontainers src/main/java/com/example/auth/)",
+      "Bash(cp -r .claude/worktrees/oauth2-testcontainers/src/test/java/com/example/auth/testcontainers src/test/java/com/example/auth/)"
+    ]
+  }
+}

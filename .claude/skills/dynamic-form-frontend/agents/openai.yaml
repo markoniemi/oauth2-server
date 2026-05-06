@@ -1,0 +1,6 @@
+interface:
+  display_name: "Dynamic Form Frontend"
+  short_description: "Dynamic Form React frontend workflow"
+  default_prompt: "Use $dynamic-form-frontend to update the frontend module."
+policy:
+  allow_implicit_invocation: true
