@@ -2,6 +2,7 @@ package com.example.auth.testcontainers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.example.auth.testcontainers.config.OAuth2ContainerRegisteredClientConfig;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.utility.DockerImageName;
 
@@ -28,6 +29,7 @@ public class OAuth2Container extends GenericContainer<OAuth2Container> {
     public OAuth2Container() {
         super(DockerImageName.parse(IMAGE_NAME));
         withExposedPorts(AUTH_SERVER_PORT);
+        withEnv("SPRING_PROFILES_ACTIVE", "testcontainers");
     }
 
     public OAuth2Container withUser(String username, String password, String... roles) {
@@ -122,7 +124,7 @@ public class OAuth2Container extends GenericContainer<OAuth2Container> {
 
     private void registerClients() {
         if (!clients.isEmpty()) {
-            // TODO: Implement client registration in Phase 2
+            OAuth2ContainerRegisteredClientConfig.setClientsToRegister(new ArrayList<>(clients));
         }
     }
 }
