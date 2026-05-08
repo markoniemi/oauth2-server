@@ -56,6 +56,55 @@ public class OAuth2Container extends GenericContainer<OAuth2Container> {
         return this;
     }
 
+    public OAuth2Container withConfigFile(String filePath) {
+        try {
+            String resolvedPath = filePath;
+
+            // Handle classpath resources
+            if (filePath.startsWith("classpath:")) {
+                resolvedPath = filePath.substring("classpath:".length());
+                ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+                var resource = classLoader.getResource(resolvedPath);
+                if (resource == null) {
+                    throw new IllegalArgumentException("Classpath resource not found: " + resolvedPath);
+                }
+                resolvedPath = resource.getPath();
+            }
+
+            // Load YAML and deserialize
+            ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+            Map<String, Object> yaml = mapper.readValue(new File(resolvedPath), Map.class);
+
+            // Extract app.security.users
+            @SuppressWarnings("unchecked")
+            Map<String, Object> app = (Map<String, Object>) yaml.get("app");
+            if (app != null) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> security = (Map<String, Object>) app.get("security");
+                if (security != null) {
+                    @SuppressWarnings("unchecked")
+                    List<Map<String, Object>> usersList = (List<Map<String, Object>>) security.get("users");
+                    if (usersList != null) {
+                        for (Map<String, Object> userMap : usersList) {
+                            String username = (String) userMap.get("username");
+                            String password = (String) userMap.get("password");
+                            @SuppressWarnings("unchecked")
+                            List<String> roles = (List<String>) userMap.get("roles");
+
+                            if (username != null && password != null && roles != null) {
+                                users.add(new OAuth2User(username, password, new HashSet<>(roles)));
+                            }
+                        }
+                    }
+                }
+            }
+
+            return this;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to load config file: " + filePath, e);
+        }
+    }
+
     public String getAuthServerUrl() {
         return "http://localhost:" + getMappedPort(AUTH_SERVER_PORT);
     }
