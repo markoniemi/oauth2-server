@@ -1,0 +1,12 @@
+app:
+  security:
+    users:
+      - username: testadmin
+        password: testpass123
+        roles:
+          - ADMIN
+          - USER
+      - username: testuser
+        password: testpass456
+        roles:
+          - USER
