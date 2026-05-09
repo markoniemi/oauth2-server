@@ -39,7 +39,7 @@ Add to your `pom.xml`:
 ```java
 @BeforeAll
 static void setUp() {
-    container = new OAuth2Container()
+    container = new Container()
         .withUser("testuser", "password", "USER")
         .withUser("admin", "password", "ADMIN", "USER");
     container.start();
@@ -56,9 +56,9 @@ static void tearDown() {
 ### Registering OAuth2 Clients
 
 ```java
-container = new OAuth2Container()
+container = new Container()
     .withOAuth2Client(
-        new OAuth2Client("client-id", "client-secret")
+        new Client("client-id", "client-secret")
             .withRedirectUri("http://localhost:8080/callback")
             .withScopes("openid", "profile", "email")
     );
@@ -87,7 +87,7 @@ app:
 Then load it:
 
 ```java
-container = new OAuth2Container()
+container = new Container()
     .withConfigFile("classpath:test-config.yaml");
 container.start();
 ```
@@ -97,7 +97,7 @@ container.start();
 You can combine both approaches:
 
 ```java
-container = new OAuth2Container()
+container = new Container()
     .withConfigFile("classpath:base-config.yaml")
     .withUser("extra-user", "extra-pass", "USER");  // Adds to file-based config
 container.start();
@@ -106,7 +106,7 @@ container.start();
 ### Custom Issuer URL and Context Path
 
 ```java
-container = new OAuth2Container()
+container = new Container()
     .withUser("testuser", "testpass", "USER")
     .withIssuerUrl("https://auth.example.com")
     .withContextPath("/auth");
@@ -118,14 +118,14 @@ String issuer = container.getIssuerUrl();   // https://auth.example.com
 
 ## API Reference
 
-### OAuth2Container
+### Container
 
 Main entry point for the TestContainers integration.
 
 **Methods:**
 
 - `withUser(String username, String password, String... roles)` - Add a user with roles
-- `withOAuth2Client(OAuth2Client client)` - Register an OAuth2 client
+- `withOAuth2Client(Client client)` - Register an OAuth2 client
 - `withConfigFile(String filePath)` - Load configuration from YAML file
   - Supports `classpath:` prefix for resources on the classpath
   - Also supports filesystem paths
@@ -137,13 +137,13 @@ Main entry point for the TestContainers integration.
 - `stop()` - Stop the container
 - `isRunning()` - Check if container is running
 
-### OAuth2Client
+### Client
 
 Represents an OAuth2 client registration.
 
 **Constructor:**
 ```java
-new OAuth2Client(String clientId, String clientSecret)
+new Client(String clientId, String clientSecret)
 ```
 
 **Methods:**
@@ -152,7 +152,7 @@ new OAuth2Client(String clientId, String clientSecret)
 - `withScopes(String... scopes)` - Add allowed scopes
 - `withGrantTypes(String... grantTypes)` - Set allowed grant types
 
-### OAuth2User
+### User
 
 Represents a user (internal - created via `withUser()`).
 
@@ -163,16 +163,16 @@ Users include username, password, and a set of roles.
 ```java
 public class OAuth2AuthenticationIT {
     
-    private static OAuth2Container container;
+    private static Container container;
     private RestClient restClient;
     
     @BeforeAll
     static void setUp() {
-        container = new OAuth2Container()
+        container = new Container()
             .withUser("user", "password", "USER")
             .withUser("admin", "password", "ADMIN")
             .withOAuth2Client(
-                new OAuth2Client("test-app", "test-secret")
+                new Client("test-app", "test-secret")
                     .withRedirectUri("http://localhost:8080/callback")
                     .withScopes("openid", "profile", "email")
             );
@@ -275,7 +275,7 @@ For testing Spring Boot applications that depend on OAuth2:
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class MyApplicationIT {
     
-    private static OAuth2Container oauth2;
+    private static Container oauth2;
     
     @DynamicPropertySource
     static void overrideProperties(DynamicPropertyRegistry registry) {
@@ -285,7 +285,7 @@ class MyApplicationIT {
     
     @BeforeAll
     static void setup() {
-        oauth2 = new OAuth2Container()
+        oauth2 = new Container()
             .withUser("testuser", "testpass", "USER");
         oauth2.start();
     }

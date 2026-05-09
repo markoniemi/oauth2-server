@@ -11,16 +11,16 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class OAuth2ContainerClientsIT {
+public class ContainerClientsIT {
 
-    private static OAuth2Container container;
+    private static Container container;
 
     @BeforeAll
     static void setUp() {
-        container = new OAuth2Container()
+        container = new Container()
             .withUser("admin", "admin123", "ADMIN")
             .withOAuth2Client(
-                new OAuth2Client("test-client", "test-secret")
+                new Client("test-client", "test-secret")
                     .withRedirectUri("http://localhost:8080/callback")
                     .withScopes("openid", "profile")
             );

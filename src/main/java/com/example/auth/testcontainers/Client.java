@@ -6,7 +6,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Data
-public class OAuth2Client {
+public class Client {
     @NotBlank(message = "Client ID cannot be blank")
     private final String clientId;
 
@@ -17,7 +17,7 @@ public class OAuth2Client {
     private Set<String> scopes = new HashSet<>();
     private Set<String> grantTypes = new HashSet<>(Set.of("authorization_code", "refresh_token"));
 
-    public OAuth2Client(String clientId, String clientSecret) {
+    public Client(String clientId, String clientSecret) {
         if (clientId == null || clientId.isBlank()) {
             throw new IllegalArgumentException("Client ID cannot be blank");
         }
@@ -28,14 +28,14 @@ public class OAuth2Client {
         this.clientSecret = clientSecret;
     }
 
-    public OAuth2Client withRedirectUri(String... uris) {
+    public Client withRedirectUri(String... uris) {
         for (String uri : uris) {
             this.redirectUris.add(uri);
         }
         return this;
     }
 
-    public OAuth2Client withScopes(String... scopeList) {
+    public Client withScopes(String... scopeList) {
         this.scopes.clear();
         for (String scope : scopeList) {
             this.scopes.add(scope);
@@ -43,7 +43,7 @@ public class OAuth2Client {
         return this;
     }
 
-    public OAuth2Client withGrantTypes(String... types) {
+    public Client withGrantTypes(String... types) {
         this.grantTypes.clear();
         for (String type : types) {
             this.grantTypes.add(type);

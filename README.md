@@ -21,10 +21,10 @@ Server runs on `http://localhost:9000`
 ```java
 @BeforeAll
 static void setUp() {
-    container = new OAuth2Container()
+    container = new Container()
         .withUser("testuser", "testpass", "USER")
         .withOAuth2Client(
-            new OAuth2Client("client-id", "client-secret")
+            new Client("client-id", "client-secret")
                 .withRedirectUri("http://localhost:8080/callback")
                 .withScopes("openid", "profile")
         );
@@ -38,7 +38,7 @@ String authServerUrl = container.getAuthServerUrl();
 
 - **[docs/OAuth2TestContainersUsage.md](docs/OAuth2TestContainersUsage.md)** — Complete guide to using OAuth2TestContainers library for testing
 - **[docs/TechSpec.md](docs/TechSpec.md)** — Architecture and configuration details of the auth server
-- **[.github/copilot-instructions.md](.github/copilot-instructions.md)** — Development guidelines and coding standards
+- **[.claude/CLAUDE.md](.claude/CLAUDE.md)** — Development guidelines and coding standards
 
 ## Features
 
@@ -67,21 +67,21 @@ src/
 │   │   │   ├── SecurityConfig.java
 │   │   │   └── SecurityProperties.java
 │   │   ├── testcontainers/
-│   │   │   ├── OAuth2Container.java
-│   │   │   ├── OAuth2Client.java
-│   │   │   ├── OAuth2User.java
-│   │   │   ├── OAuth2ServerConfig.java
-│   │   │   └── OAuth2ContainerRegisteredClientConfig.java
+│   │   │   ├── Container.java
+│   │   │   ├── Client.java
+│   │   │   ├── User.java
+│   │   │   ├── ServerConfig.java
+│   │   │   └── ContainerRegisteredClientConfig.java
 │   │   └── controller/
 │   └── resources/
 │       └── application.yaml
 └── test/
     ├── java/com/example/auth/
     │   ├── testcontainers/
-    │   │   ├── OAuth2ContainerIT.java
-    │   │   ├── OAuth2ContainerClientsIT.java
-    │   │   ├── OAuth2ContainerConfigFileIT.java
-    │   │   └── OAuth2ContainerAuthFlowIT.java
+    │   │   ├── ContainerIT.java
+    │   │   ├── ContainerClientsIT.java
+    │   │   ├── ContainerConfigFileIT.java
+    │   │   └── ContainerAuthFlowIT.java
     │   └── AuthServerIT.java
     └── resources/
         └── test-config.yaml
@@ -96,7 +96,7 @@ mvn verify
 
 Run specific test class:
 ```bash
-mvn test -Dtest=OAuth2ContainerIT
+mvn test -Dtest=ContainerIT
 ```
 
 ### Test Coverage

@@ -2,7 +2,7 @@ package com.example.auth.testcontainers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import com.example.auth.testcontainers.config.OAuth2ContainerRegisteredClientConfig;
+import com.example.auth.testcontainers.config.ContainerRegisteredClientConfig;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.utility.DockerImageName;
 
@@ -16,47 +16,47 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class OAuth2Container extends GenericContainer<OAuth2Container> {
+public class Container extends GenericContainer<Container> {
 
     private static final int AUTH_SERVER_PORT = 9000;
     private static final String IMAGE_NAME = "ghcr.io/markoniemi/oauth2-server:latest";
 
-    private List<OAuth2User> users = new ArrayList<>();
-    private List<OAuth2Client> clients = new ArrayList<>();
+    private List<User> users = new ArrayList<>();
+    private List<Client> clients = new ArrayList<>();
     private String issuerUrl;
     private String contextPath = "/";
 
-    public OAuth2Container() {
+    public Container() {
         super(DockerImageName.parse(IMAGE_NAME));
         withExposedPorts(AUTH_SERVER_PORT);
         withEnv("SPRING_PROFILES_ACTIVE", "testcontainers");
     }
 
-    public OAuth2Container withUser(String username, String password, String... roles) {
+    public Container withUser(String username, String password, String... roles) {
         Set<String> roleSet = new HashSet<>();
         for (String role : roles) {
             roleSet.add(role);
         }
-        users.add(new OAuth2User(username, password, roleSet));
+        users.add(new User(username, password, roleSet));
         return this;
     }
 
-    public OAuth2Container withOAuth2Client(OAuth2Client client) {
+    public Container withOAuth2Client(Client client) {
         clients.add(client);
         return this;
     }
 
-    public OAuth2Container withIssuerUrl(String issuerUrl) {
+    public Container withIssuerUrl(String issuerUrl) {
         this.issuerUrl = issuerUrl;
         return this;
     }
 
-    public OAuth2Container withContextPath(String contextPath) {
+    public Container withContextPath(String contextPath) {
         this.contextPath = contextPath;
         return this;
     }
 
-    public OAuth2Container withConfigFile(String filePath) {
+    public Container withConfigFile(String filePath) {
         try {
             String resolvedPath = filePath;
 
@@ -92,7 +92,7 @@ public class OAuth2Container extends GenericContainer<OAuth2Container> {
                             List<String> roles = (List<String>) userMap.get("roles");
 
                             if (username != null && password != null && roles != null) {
-                                users.add(new OAuth2User(username, password, new HashSet<>(roles)));
+                                users.add(new User(username, password, new HashSet<>(roles)));
                             }
                         }
                     }
@@ -136,7 +136,7 @@ public class OAuth2Container extends GenericContainer<OAuth2Container> {
         Map<String, Object> securityConfig = new LinkedHashMap<>();
         List<Map<String, Object>> usersList = new ArrayList<>();
 
-        for (OAuth2User user : users) {
+        for (User user : users) {
             Map<String, Object> userMap = new LinkedHashMap<>();
             userMap.put("username", user.username());
             userMap.put("password", user.password());
@@ -173,7 +173,7 @@ public class OAuth2Container extends GenericContainer<OAuth2Container> {
 
     private void registerClients() {
         if (!clients.isEmpty()) {
-            OAuth2ContainerRegisteredClientConfig.setClientsToRegister(new ArrayList<>(clients));
+            ContainerRegisteredClientConfig.setClientsToRegister(new ArrayList<>(clients));
         }
     }
 }

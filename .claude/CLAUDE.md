@@ -29,13 +29,13 @@ Reusable library for testing downstream applications:
 
 ### Key Components
 
-**OAuth2Container** — Main entry point. Extends `GenericContainer<OAuth2Container>` to manage the Docker container lifecycle and configuration.
+**Container** — Main entry point. Extends `GenericContainer<Container>` to manage the Docker container lifecycle and configuration.
 
-**OAuth2Client & OAuth2User** — Data classes (Java records) representing registered clients and authentication users with validation.
+**Client & User** — Data classes (Java records) representing registered clients and authentication users with validation.
 
-**OAuth2ServerConfig** — Configuration aggregator supporting both fluent builder and YAML file-based setup.
+**ServerConfig** — Configuration aggregator supporting both fluent builder and YAML file-based setup.
 
-**OAuth2ContainerRegisteredClientConfig** — Spring configuration class that registers clients into the authorization server's repository.
+**ContainerRegisteredClientConfig** — Spring configuration class that registers clients into the authorization server's repository.
 
 For detailed information about coding conventions and development practices, refer to the [Copilot Instructions](../.github/copilot-instructions.md).
 
@@ -48,9 +48,9 @@ Brief action; additional change; optional note
 ```
 
 **Examples:**
-- `Add OAuth2TestContainers library; support fluent builder and YAML config; enable testing with containerized auth server`
+- `Add TestContainers library; support fluent builder and YAML config; enable testing with containerized auth server`
 - `Simplify user configuration: use records instead of classes; add Lombok @Data where safe`
-- `Refactor OAuth2Client: manual constructor validation instead of Lombok @Builder to prevent null bypasses`
+- `Refactor Client: manual constructor validation instead of Lombok @Builder to prevent null bypasses`
 
 **Guidelines:**
 - One line only — concise and scannable in git log

@@ -7,17 +7,17 @@ import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.server.authorization.client.InMemoryRegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
-import com.example.auth.testcontainers.OAuth2Client;
+import com.example.auth.testcontainers.Client;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-public class OAuth2ContainerRegisteredClientConfig {
+public class ContainerRegisteredClientConfig {
 
     // Static field to hold clients provided by TestContainers
-    private static List<OAuth2Client> clientsToRegister = new ArrayList<>();
+    private static List<Client> clientsToRegister = new ArrayList<>();
 
-    public static void setClientsToRegister(List<OAuth2Client> clients) {
+    public static void setClientsToRegister(List<Client> clients) {
         clientsToRegister = new ArrayList<>(clients);
     }
 
@@ -25,7 +25,7 @@ public class OAuth2ContainerRegisteredClientConfig {
     public RegisteredClientRepository registeredClientRepository() {
         List<RegisteredClient> registeredClients = new ArrayList<>();
 
-        for (OAuth2Client client : clientsToRegister) {
+        for (Client client : clientsToRegister) {
             RegisteredClient.Builder builder = RegisteredClient.withId(UUID.randomUUID().toString())
                 .clientId(client.getClientId())
                 .clientSecret(client.getClientSecret())

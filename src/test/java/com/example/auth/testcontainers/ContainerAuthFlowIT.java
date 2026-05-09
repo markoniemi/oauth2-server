@@ -16,16 +16,16 @@ import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class OAuth2ContainerAuthFlowIT {
+public class ContainerAuthFlowIT {
 
-    private static OAuth2Container container;
+    private static Container container;
     private WebClient webClient;
 
     @BeforeAll
     static void setUp() {
-        container = new OAuth2Container()
+        container = new Container()
             .withOAuth2Client(
-                new OAuth2Client("test-frontend", "client-secret")
+                new Client("test-frontend", "client-secret")
                     .withRedirectUri("http://localhost:8080/callback")
                     .withScopes("openid", "profile")
             );

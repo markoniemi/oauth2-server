@@ -6,15 +6,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-public class OAuth2ServerConfigTest {
+public class ServerConfigTest {
 
     @Test
     public void noDuplicateUsernames() {
-        OAuth2User user1 = new OAuth2User("admin", "pass1", Set.of("ADMIN"));
-        OAuth2User user2 = new OAuth2User("admin", "pass2", Set.of("USER"));
+        User user1 = new User("admin", "pass1", Set.of("ADMIN"));
+        User user2 = new User("admin", "pass2", Set.of("USER"));
 
         assertThrows(IllegalArgumentException.class, () -> {
-            new OAuth2ServerConfig(
+            new ServerConfig(
                 List.of(user1, user2),
                 List.of(),
                 null,
@@ -25,11 +25,11 @@ public class OAuth2ServerConfigTest {
 
     @Test
     public void noDuplicateClientIds() {
-        OAuth2Client client1 = new OAuth2Client("app1", "secret1");
-        OAuth2Client client2 = new OAuth2Client("app1", "secret2");
+        Client client1 = new Client("app1", "secret1");
+        Client client2 = new Client("app1", "secret2");
 
         assertThrows(IllegalArgumentException.class, () -> {
-            new OAuth2ServerConfig(
+            new ServerConfig(
                 List.of(),
                 List.of(client1, client2),
                 null,
@@ -40,12 +40,12 @@ public class OAuth2ServerConfigTest {
 
     @Test
     public void validConfigCreatesSuccessfully() {
-        OAuth2User user = new OAuth2User("admin", "password", Set.of("ADMIN"));
-        OAuth2Client client = new OAuth2Client("app", "secret")
+        User user = new User("admin", "password", Set.of("ADMIN"));
+        Client client = new Client("app", "secret")
             .withRedirectUri("http://localhost:3000/callback")
             .withScopes("openid");
 
-        OAuth2ServerConfig config = new OAuth2ServerConfig(
+        ServerConfig config = new ServerConfig(
             List.of(user),
             List.of(client),
             "http://auth:9000",
@@ -60,13 +60,13 @@ public class OAuth2ServerConfigTest {
 
     @Test
     public void usersAreImmutable() {
-        List<OAuth2User> users = new ArrayList<>(
-            List.of(new OAuth2User("admin", "password", Set.of("ADMIN")))
+        List<User> users = new ArrayList<>(
+            List.of(new User("admin", "password", Set.of("ADMIN")))
         );
-        OAuth2ServerConfig config = new OAuth2ServerConfig(users, List.of(), null, null);
+        ServerConfig config = new ServerConfig(users, List.of(), null, null);
 
         // Try to modify original list
-        users.add(new OAuth2User("user", "password", Set.of("USER")));
+        users.add(new User("user", "password", Set.of("USER")));
 
         // Config should still have only 1 user
         assertEquals(1, config.users().size());

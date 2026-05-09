@@ -4,7 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import java.util.Set;
 
-public record OAuth2User(
+public record User(
     @NotBlank(message = "Username cannot be blank")
     String username,
 
@@ -14,7 +14,7 @@ public record OAuth2User(
     @NotEmpty(message = "Roles cannot be empty")
     Set<String> roles
 ) {
-    public OAuth2User {
+    public User {
         if (username != null && username.isBlank()) {
             throw new IllegalArgumentException("Username cannot be blank");
         }

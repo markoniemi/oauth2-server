@@ -4,25 +4,25 @@ import org.junit.jupiter.api.Test;
 import java.util.Set;
 import static org.junit.jupiter.api.Assertions.*;
 
-public class OAuth2ClientTest {
+public class ClientTest {
 
     @Test
     public void clientIdCannotBeBlank() {
         assertThrows(IllegalArgumentException.class, () -> {
-            new OAuth2Client("", "secret");
+            new Client("", "secret");
         });
     }
 
     @Test
     public void clientSecretCannotBeBlank() {
         assertThrows(IllegalArgumentException.class, () -> {
-            new OAuth2Client("my-app", "");
+            new Client("my-app", "");
         });
     }
 
     @Test
     public void fluentBuilderWithRedirectUri() {
-        OAuth2Client client = new OAuth2Client("my-app", "secret")
+        Client client = new Client("my-app", "secret")
             .withRedirectUri("http://localhost:3000/callback");
 
         assertEquals("my-app", client.getClientId());
@@ -32,7 +32,7 @@ public class OAuth2ClientTest {
 
     @Test
     public void multipleRedirectUris() {
-        OAuth2Client client = new OAuth2Client("my-app", "secret")
+        Client client = new Client("my-app", "secret")
             .withRedirectUri("http://localhost:3000/callback")
             .withRedirectUri("http://localhost:3000/logout");
 
@@ -41,7 +41,7 @@ public class OAuth2ClientTest {
 
     @Test
     public void fluentBuilderWithScopes() {
-        OAuth2Client client = new OAuth2Client("my-app", "secret")
+        Client client = new Client("my-app", "secret")
             .withScopes("openid", "profile", "email");
 
         assertEquals(3, client.getScopes().size());
@@ -50,13 +50,13 @@ public class OAuth2ClientTest {
 
     @Test
     public void defaultGrantTypes() {
-        OAuth2Client client = new OAuth2Client("my-app", "secret");
+        Client client = new Client("my-app", "secret");
         assertEquals(Set.of("authorization_code", "refresh_token"), client.getGrantTypes());
     }
 
     @Test
     public void customGrantTypes() {
-        OAuth2Client client = new OAuth2Client("my-app", "secret")
+        Client client = new Client("my-app", "secret")
             .withGrantTypes("client_credentials");
 
         assertEquals(Set.of("client_credentials"), client.getGrantTypes());

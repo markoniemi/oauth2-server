@@ -12,7 +12,8 @@
       "WebFetch(domain:ankurm.com)",
       "WebFetch(domain:serdaralkancode.medium.com)",
       "Bash(cp -r .claude/worktrees/oauth2-testcontainers/src/main/java/com/example/auth/testcontainers src/main/java/com/example/auth/)",
-      "Bash(cp -r .claude/worktrees/oauth2-testcontainers/src/test/java/com/example/auth/testcontainers src/test/java/com/example/auth/)"
+      "Bash(cp -r .claude/worktrees/oauth2-testcontainers/src/test/java/com/example/auth/testcontainers src/test/java/com/example/auth/)",
+      "PowerShell(Move-Item *)"
     ]
   }
 }

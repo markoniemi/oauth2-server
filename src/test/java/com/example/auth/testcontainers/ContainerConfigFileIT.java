@@ -5,17 +5,17 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
-public class OAuth2ContainerConfigFileIT {
+public class ContainerConfigFileIT {
 
-    private static OAuth2Container containerFromClasspath;
-    private static OAuth2Container containerMixed;
+    private static Container containerFromClasspath;
+    private static Container containerMixed;
 
     @BeforeAll
     static void setUp() {
-        containerFromClasspath = new OAuth2Container()
+        containerFromClasspath = new Container()
             .withConfigFile("classpath:test-config.yaml");
 
-        containerMixed = new OAuth2Container()
+        containerMixed = new Container()
             .withConfigFile("classpath:test-users.yaml")
             .withUser("extra-user", "extra-pass", "USER");
     }
@@ -71,7 +71,7 @@ public class OAuth2ContainerConfigFileIT {
     @Test
     public void throwsOnMissingFile() {
         assertThrows(RuntimeException.class, () -> {
-            new OAuth2Container()
+            new Container()
                 .withConfigFile("classpath:nonexistent.yaml");
         });
     }
