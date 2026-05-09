@@ -1,21 +1,28 @@
 package com.example.auth.testcontainers;
 
-import java.util.List;
+import lombok.Builder;
+import lombok.Data;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
-public record ServerConfig(
-    List<User> users,
-    List<Client> clients,
-    String issuerUrl,
-    String contextPath
-) {
-    public ServerConfig {
-        users = List.copyOf(users);
-        clients = List.copyOf(clients);
+@Data
+@Builder
+public class ServerConfig {
+    private final List<User> users;
+    private final List<Client> clients;
+    private final String issuerUrl;
+    private final String contextPath;
 
-        validateNoDuplicateUsernames(users);
-        validateNoDuplicateClientIds(clients);
+    public ServerConfig(List<User> users, List<Client> clients, String issuerUrl, String contextPath) {
+        this.users = users == null ? new ArrayList<>() : List.copyOf(users);
+        this.clients = clients == null ? new ArrayList<>() : List.copyOf(clients);
+        this.issuerUrl = issuerUrl;
+        this.contextPath = contextPath;
+
+        validateNoDuplicateUsernames(this.users);
+        validateNoDuplicateClientIds(this.clients);
     }
 
     private static void validateNoDuplicateUsernames(List<User> users) {

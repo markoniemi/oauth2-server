@@ -52,10 +52,10 @@ public class ServerConfigTest {
             "/"
         );
 
-        assertEquals(1, config.users().size());
-        assertEquals(1, config.clients().size());
-        assertEquals("http://auth:9000", config.issuerUrl());
-        assertEquals("/", config.contextPath());
+        assertEquals(1, config.getUsers().size());
+        assertEquals(1, config.getClients().size());
+        assertEquals("http://auth:9000", config.getIssuerUrl());
+        assertEquals("/", config.getContextPath());
     }
 
     @Test
@@ -69,6 +69,6 @@ public class ServerConfigTest {
         users.add(new User("user", "password", Set.of("USER")));
 
         // Config should still have only 1 user
-        assertEquals(1, config.users().size());
+        assertEquals(1, config.getUsers().size());
     }
 }

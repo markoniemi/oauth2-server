@@ -9,50 +9,50 @@ public class ContainerBuilderTest {
 
     @Test
     public void builderAccumulatesUsers() {
-        ServerConfigBuilder builder = new ServerConfigBuilder()
-            .withUser("admin", "password", "ADMIN", "USER")
-            .withUser("viewer", "pass123", "VIEWER");
+        ServerConfig config = ServerConfig.builder()
+            .users(List.of(
+                new User("admin", "password", Set.of("ADMIN", "USER")),
+                new User("viewer", "pass123", Set.of("VIEWER"))
+            ))
+            .build();
 
-        ServerConfig config = builder.build();
-        assertEquals(2, config.users().size());
+        assertEquals(2, config.getUsers().size());
     }
 
     @Test
     public void builderAccumulatesClients() {
-        ServerConfigBuilder builder = new ServerConfigBuilder()
-            .withOAuth2Client(
+        ServerConfig config = ServerConfig.builder()
+            .clients(List.of(
                 new Client("app1", "secret1")
                     .withRedirectUri("http://localhost:3000/callback")
-                    .withScopes("openid")
-            )
-            .withOAuth2Client(
+                    .withScopes("openid"),
                 new Client("app2", "secret2")
                     .withRedirectUri("http://localhost:4000/callback")
                     .withScopes("profile")
-            );
+            ))
+            .build();
 
-        ServerConfig config = builder.build();
-        assertEquals(2, config.clients().size());
+        assertEquals(2, config.getClients().size());
     }
 
     @Test
     public void builderWithCustomIssuerUrl() {
-        ServerConfig config = new ServerConfigBuilder()
-            .withUser("admin", "password", "ADMIN")
-            .withIssuerUrl("http://custom-auth:9000")
+        ServerConfig config = ServerConfig.builder()
+            .users(List.of(new User("admin", "password", Set.of("ADMIN"))))
+            .issuerUrl("http://custom-auth:9000")
             .build();
 
-        assertEquals("http://custom-auth:9000", config.issuerUrl());
+        assertEquals("http://custom-auth:9000", config.getIssuerUrl());
     }
 
     @Test
     public void builderWithContextPath() {
-        ServerConfig config = new ServerConfigBuilder()
-            .withUser("admin", "password", "ADMIN")
-            .withContextPath("/auth")
+        ServerConfig config = ServerConfig.builder()
+            .users(List.of(new User("admin", "password", Set.of("ADMIN"))))
+            .contextPath("/auth")
             .build();
 
-        assertEquals("/auth", config.contextPath());
+        assertEquals("/auth", config.getContextPath());
     }
 
     @Test
@@ -60,10 +60,10 @@ public class ContainerBuilderTest {
         User user1 = new User("admin", "pass1", Set.of("ADMIN"));
         User user2 = new User("admin", "pass2", Set.of("USER"));
 
-        ServerConfigBuilder builder = new ServerConfigBuilder();
-        builder.addUser(user1);
-        builder.addUser(user2);
-
-        assertThrows(IllegalArgumentException.class, builder::build);
+        assertThrows(IllegalArgumentException.class, () -> {
+            ServerConfig.builder()
+                .users(List.of(user1, user2))
+                .build();
+        });
     }
 }
