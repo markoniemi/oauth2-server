@@ -1,11 +1,16 @@
 package com.example.auth.testcontainers;
 
+import lombok.Builder;
 import lombok.Data;
 import jakarta.validation.constraints.NotBlank;
+import lombok.RequiredArgsConstructor;
+import org.springframework.validation.annotation.Validated;
 import java.util.HashSet;
 import java.util.Set;
 
 @Data
+@Validated
+@RequiredArgsConstructor
 public class Client {
     @NotBlank(message = "Client ID cannot be blank")
     private final String clientId;
@@ -16,17 +21,6 @@ public class Client {
     private Set<String> redirectUris = new HashSet<>();
     private Set<String> scopes = new HashSet<>();
     private Set<String> grantTypes = new HashSet<>(Set.of("authorization_code", "refresh_token"));
-
-    public Client(String clientId, String clientSecret) {
-        if (clientId == null || clientId.isBlank()) {
-            throw new IllegalArgumentException("Client ID cannot be blank");
-        }
-        if (clientSecret == null || clientSecret.isBlank()) {
-            throw new IllegalArgumentException("Client secret cannot be blank");
-        }
-        this.clientId = clientId;
-        this.clientSecret = clientSecret;
-    }
 
     public Client withRedirectUri(String... uris) {
         for (String uri : uris) {

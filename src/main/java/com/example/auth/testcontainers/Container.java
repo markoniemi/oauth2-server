@@ -3,6 +3,7 @@ package com.example.auth.testcontainers;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.example.auth.testcontainers.config.ContainerRegisteredClientConfig;
+import jakarta.validation.Valid;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.utility.DockerImageName;
 
@@ -41,7 +42,7 @@ public class Container extends GenericContainer<Container> {
         return this;
     }
 
-    public Container withOAuth2Client(Client client) {
+    public Container withOAuth2Client(@Valid Client client) {
         clients.add(client);
         return this;
     }
@@ -75,25 +76,16 @@ public class Container extends GenericContainer<Container> {
             ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
             Map<String, Object> yaml = mapper.readValue(new File(resolvedPath), Map.class);
 
-            // Extract app.security.users
+            // Extract app.security and map to SecurityConfig
             @SuppressWarnings("unchecked")
             Map<String, Object> app = (Map<String, Object>) yaml.get("app");
             if (app != null) {
-                @SuppressWarnings("unchecked")
-                Map<String, Object> security = (Map<String, Object>) app.get("security");
+                Object security = app.get("security");
                 if (security != null) {
-                    @SuppressWarnings("unchecked")
-                    List<Map<String, Object>> usersList = (List<Map<String, Object>>) security.get("users");
-                    if (usersList != null) {
-                        for (Map<String, Object> userMap : usersList) {
-                            String username = (String) userMap.get("username");
-                            String password = (String) userMap.get("password");
-                            @SuppressWarnings("unchecked")
-                            List<String> roles = (List<String>) userMap.get("roles");
-
-                            if (username != null && password != null && roles != null) {
-                                users.add(new User(username, password, new HashSet<>(roles)));
-                            }
+                    SecurityConfig config = mapper.convertValue(security, SecurityConfig.class);
+                    for (UserConfig userConfig : config.getUsers()) {
+                        if (userConfig.getUsername() != null && userConfig.getPassword() != null && !userConfig.getRoles().isEmpty()) {
+                            users.add(userConfig.toUser());
                         }
                     }
                 }
