@@ -1,33 +1,43 @@
 # Claude Development Guidelines
 
-This document provides development guidelines for this project. For detailed Copilot and code generation instructions, please refer to the GitHub Copilot Instructions.
+This document provides development guidelines for this OAuth2 Authorization Server project with integrated TestContainers support.
 
 ## Quick Reference
 
-- **Copilot Instructions**: See [.github/copilot-instructions.md](../.github/copilot-instructions.md) for comprehensive guidance on coding conventions, architecture patterns, and development standards.
-
-## Key Resources
-
-- **TechnicalSpecification.md**: Defines the technical architecture and stack
-- **RequirementsSpecification.md**: Outlines project requirements and features
-- **copilot-instructions.md**: Complete coding standards and guidelines for all team members
+- **Start here**: [README.md](../README.md) — Project overview, quick start, and architecture
+- **Testing guide**: [OAuth2TestContainersUsage.md](../OAuth2TestContainersUsage.md) — Complete API reference for TestContainers integration
+- **Tech details**: [docs/TechSpec.md](../docs/TechSpec.md) — Auth server architecture and configuration
+- **Code standards**: [.github/copilot-instructions.md](../.github/copilot-instructions.md) — Coding conventions and development standards
 
 ## Architecture Overview
 
-This is a monolithic Spring Boot application with:
-- **Backend**: Java/Spring Boot REST API
-- **Frontend**: React/TypeScript SPA packaged as a WebJar
-- **Database**: PostgreSQL with H2 for tests
-- **Authentication**: OAuth 2.0 with Spring Security
-- **Error Handling**: RFC 7807 Problem Details with validation error extensions
+### OAuth2 Authorization Server
+A Spring Boot 3.5.6 OAuth2 Authorization Server with:
+- **OAuth2 Authorization Code flow** with PKCE support
+- **OpenID Connect** discovery endpoint
+- **JWT token** generation
+- **Form login** authentication
+- **Custom user/role** management via YAML or fluent API
 
-### Key Architectural Patterns
+### TestContainers Integration
+Reusable library for testing downstream applications:
+- Spin up auth server in Docker during tests
+- Fluent builder API for user and client configuration
+- YAML file support for complex setups
+- Custom issuer URL and context path support
+- Full lifecycle management
 
-**Error Responses** — All API errors follow RFC 7807 (`ProblemDetail`). Validation errors include an `errors` array with field-level details (`{ field, message, code }`). Frontend wires these directly into form field errors using react-hook-form.
+### Key Components
 
-**Validation** — Spring Validation Framework (`@Valid`, `@NotBlank`, etc.) on DTOs. Global exception handler extracts field errors and returns them in the `errors` extension of `ProblemDetail`.
+**OAuth2Container** — Main entry point. Extends `GenericContainer<OAuth2Container>` to manage the Docker container lifecycle and configuration.
 
-For detailed information about coding conventions, architecture patterns, and development practices, refer to the [Copilot Instructions](../.github/copilot-instructions.md).
+**OAuth2Client & OAuth2User** — Data classes (Java records) representing registered clients and authentication users with validation.
+
+**OAuth2ServerConfig** — Configuration aggregator supporting both fluent builder and YAML file-based setup.
+
+**OAuth2ContainerRegisteredClientConfig** — Spring configuration class that registers clients into the authorization server's repository.
+
+For detailed information about coding conventions and development practices, refer to the [Copilot Instructions](../.github/copilot-instructions.md).
 
 ## Git Commit Messages
 
@@ -38,9 +48,9 @@ Brief action; additional change; optional note
 ```
 
 **Examples:**
-- `Add i18n for validation messages and form labels; replace 26 hardcoded strings in EditForm and FieldEditor with translation keys`
-- `Simplify service contracts: throw on non-JSON instead of returning null; remove nullable returns; simplify empty checks in components`
-- `Replace fireEvent with userEvent in 3 test files; modernize test patterns for better UX simulation`
+- `Add OAuth2TestContainers library; support fluent builder and YAML config; enable testing with containerized auth server`
+- `Simplify user configuration: use records instead of classes; add Lombok @Data where safe`
+- `Refactor OAuth2Client: manual constructor validation instead of Lombok @Builder to prevent null bypasses`
 
 **Guidelines:**
 - One line only — concise and scannable in git log
@@ -49,3 +59,11 @@ Brief action; additional change; optional note
 - Focus on **what changed and why**, not implementation details
 - Capitalize first word
 - No period at end
+
+## Implementation Tasks
+
+During implementation tasks (planning, coding, testing):
+- **Do not commit** unless explicitly asked
+- Work iteratively and validate completeness before committing
+- Use feature branches for significant work
+- Plan all changes upfront before execution
