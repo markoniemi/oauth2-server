@@ -2,7 +2,7 @@ package com.example.auth.testcontainers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import com.example.auth.testcontainers.config.ContainerRegisteredClientConfig;
+import org.springframework.util.CollectionUtils;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.utility.DockerImageName;
 
@@ -163,8 +163,8 @@ public class Container extends GenericContainer<Container> {
     }
 
     private void registerClients() {
-        if (!clients.isEmpty()) {
-            ContainerRegisteredClientConfig.setClientsToRegister(new ArrayList<>(clients));
+        if (!CollectionUtils.isEmpty(clients)) {
+            ClientConfig.setClients(new ArrayList<>(clients));
         }
     }
 }

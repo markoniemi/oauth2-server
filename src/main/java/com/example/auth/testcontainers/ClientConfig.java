@@ -1,7 +1,6 @@
-package com.example.auth.testcontainers.config;
+package com.example.auth.testcontainers;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -13,23 +12,21 @@ import org.springframework.security.oauth2.server.authorization.client.InMemoryR
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 
-import com.example.auth.testcontainers.Client;
-
 @Configuration
-public class ContainerRegisteredClientConfig {
+public class ClientConfig {
 
     // Static field to hold clients provided by TestContainers
-    private static List<Client> clientsToRegister = new ArrayList<>();
+    private static List<Client> clients = new ArrayList<>();
 
-    public static void setClientsToRegister(List<Client> clients) {
-        clientsToRegister = new ArrayList<>(clients);
+    public static void setClients(List<Client> clients) {
+        ClientConfig.clients = new ArrayList<>(clients);
     }
 
     @Bean
     public RegisteredClientRepository registeredClientRepository() {
         List<RegisteredClient> registeredClients = new ArrayList<>();
 
-        for (Client client : clientsToRegister) {
+        for (Client client : clients) {
             RegisteredClient.Builder builder = RegisteredClient.withId(UUID.randomUUID().toString())
                 .clientId(client.getClientId())
                 .clientSecret(client.getClientSecret())
