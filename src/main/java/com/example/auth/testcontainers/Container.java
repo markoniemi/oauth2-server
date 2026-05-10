@@ -3,7 +3,6 @@ package com.example.auth.testcontainers;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.example.auth.testcontainers.config.ContainerRegisteredClientConfig;
-import jakarta.validation.Valid;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.utility.DockerImageName;
 
@@ -42,7 +41,7 @@ public class Container extends GenericContainer<Container> {
         return this;
     }
 
-    public Container withOAuth2Client(@Valid Client client) {
+    public Container withOAuth2Client(Client client) {
         clients.add(client);
         return this;
     }
