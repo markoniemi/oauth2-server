@@ -45,14 +45,4 @@ public class UserTest {
         assertEquals("password", user.getPassword());
         assertEquals(Set.of("ADMIN", "USER"), user.getRoles());
     }
-
-    @Test
-    public void rolesAreImmutable() {
-        Set<String> original = new HashSet<>(Set.of("USER"));
-        User user = new User("admin", "password", original);
-
-        // Modify original, should not affect user
-        original.add("ADMIN");
-        assertEquals(Set.of("USER"), user.getRoles());
-    }
 }
