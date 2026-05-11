@@ -36,7 +36,7 @@ public class ClientTest {
     @Test
     public void fluentBuilderWithRedirectUri() {
         Client client = new Client("my-app", "secret")
-            .withRedirectUri("http://localhost:3000/callback");
+            .withRedirectUris("http://localhost:3000/callback");
 
         assertEquals("my-app", client.getClientId());
         assertEquals("secret", client.getClientSecret());
@@ -46,8 +46,7 @@ public class ClientTest {
     @Test
     public void multipleRedirectUris() {
         Client client = new Client("my-app", "secret")
-            .withRedirectUri("http://localhost:3000/callback")
-            .withRedirectUri("http://localhost:3000/logout");
+            .withRedirectUris("http://localhost:3000/callback","http://localhost:3000/logout");
 
         assertEquals(2, client.getRedirectUris().size());
     }

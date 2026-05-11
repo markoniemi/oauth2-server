@@ -4,7 +4,6 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.web.client.RestClient;
 import java.util.Base64;
 import java.util.Map;
@@ -21,7 +20,7 @@ public class ContainerClientsIT {
             .withUser("admin", "admin123", "ADMIN")
             .withOAuth2Client(
                 new Client("test-client", "test-secret")
-                    .withRedirectUri("http://localhost:8080/callback")
+                    .withRedirectUris("http://localhost:8080/callback")
                     .withScopes("openid", "profile")
             );
         container.start();

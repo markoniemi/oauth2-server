@@ -24,10 +24,10 @@ public class ContainerBuilderTest {
         ServerConfig config = ServerConfig.builder()
             .clients(List.of(
                 new Client("app1", "secret1")
-                    .withRedirectUri("http://localhost:3000/callback")
+                    .withRedirectUris("http://localhost:3000/callback")
                     .withScopes("openid"),
                 new Client("app2", "secret2")
-                    .withRedirectUri("http://localhost:4000/callback")
+                    .withRedirectUris("http://localhost:4000/callback")
                     .withScopes("profile")
             ))
             .build();

@@ -1,12 +1,13 @@
 package com.example.auth.testcontainers;
 
-import lombok.Builder;
-import lombok.Data;
 import jakarta.validation.constraints.NotBlank;
-import lombok.RequiredArgsConstructor;
-import org.springframework.validation.annotation.Validated;
+
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
+import org.springframework.validation.annotation.Validated;
 
 @Data
 @Validated
@@ -22,26 +23,18 @@ public class Client {
     private Set<String> scopes = new HashSet<>();
     private Set<String> grantTypes = new HashSet<>(Set.of("authorization_code", "refresh_token"));
 
-    public Client withRedirectUri(String... uris) {
-        for (String uri : uris) {
-            this.redirectUris.add(uri);
-        }
+    public Client withRedirectUris(String... uris) {
+        this.redirectUris=new HashSet<>(Arrays.asList(uris));
         return this;
     }
 
-    public Client withScopes(String... scopeList) {
-        this.scopes.clear();
-        for (String scope : scopeList) {
-            this.scopes.add(scope);
-        }
+    public Client withScopes(String... scopes) {
+        this.scopes=new HashSet<>(Arrays.asList(scopes));
         return this;
     }
 
     public Client withGrantTypes(String... types) {
-        this.grantTypes.clear();
-        for (String type : types) {
-            this.grantTypes.add(type);
-        }
+        this.grantTypes=new HashSet<>(Arrays.asList(types));
         return this;
     }
 }

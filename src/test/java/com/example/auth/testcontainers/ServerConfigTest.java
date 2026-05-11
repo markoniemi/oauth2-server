@@ -42,7 +42,7 @@ public class ServerConfigTest {
     public void validConfigCreatesSuccessfully() {
         User user = new User("admin", "password", Set.of("ADMIN"));
         Client client = new Client("app", "secret")
-            .withRedirectUri("http://localhost:3000/callback")
+            .withRedirectUris("http://localhost:3000/callback")
             .withScopes("openid");
 
         ServerConfig config = new ServerConfig(

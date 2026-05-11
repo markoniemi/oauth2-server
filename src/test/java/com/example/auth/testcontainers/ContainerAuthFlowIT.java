@@ -26,7 +26,7 @@ public class ContainerAuthFlowIT {
         container = new Container()
             .withOAuth2Client(
                 new Client("test-frontend", "client-secret")
-                    .withRedirectUri("http://localhost:8080/callback")
+                    .withRedirectUris("http://localhost:8080/callback")
                     .withScopes("openid", "profile")
             );
         container.start();
