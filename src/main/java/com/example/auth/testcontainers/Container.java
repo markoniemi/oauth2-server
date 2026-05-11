@@ -1,11 +1,9 @@
 package com.example.auth.testcontainers;
 
+import static java.util.Arrays.asList;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import org.springframework.util.CollectionUtils;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.utility.DockerImageName;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -14,17 +12,18 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import org.springframework.util.CollectionUtils;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.utility.DockerImageName;
 
 public class Container extends GenericContainer<Container> {
 
     private static final int AUTH_SERVER_PORT = 9000;
     private static final String IMAGE_NAME = "ghcr.io/markoniemi/oauth2-server:latest";
 
-    private List<User> users = new ArrayList<>();
-    private List<Client> clients = new ArrayList<>();
+    private final List<User> users = new ArrayList<>();
+    private final List<Client> clients = new ArrayList<>();
     private String issuerUrl;
-    private String contextPath = "/";
 
     public Container() {
         super(DockerImageName.parse(IMAGE_NAME));
@@ -33,11 +32,7 @@ public class Container extends GenericContainer<Container> {
     }
 
     public Container withUser(String username, String password, String... roles) {
-        Set<String> roleSet = new HashSet<>();
-        for (String role : roles) {
-            roleSet.add(role);
-        }
-        users.add(new User(username, password, roleSet));
+        users.add(new User(username, password, new HashSet<>(asList( roles))));
         return this;
     }
 
@@ -48,11 +43,6 @@ public class Container extends GenericContainer<Container> {
 
     public Container withIssuerUrl(String issuerUrl) {
         this.issuerUrl = issuerUrl;
-        return this;
-    }
-
-    public Container withContextPath(String contextPath) {
-        this.contextPath = contextPath;
         return this;
     }
 
@@ -73,6 +63,7 @@ public class Container extends GenericContainer<Container> {
 
             // Load YAML and deserialize
             ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+            @SuppressWarnings("unchecked")
             Map<String, Object> yaml = mapper.readValue(new File(resolvedPath), Map.class);
 
             // Extract app.security and map to SecurityConfig
@@ -129,9 +120,9 @@ public class Container extends GenericContainer<Container> {
 
         for (User user : users) {
             Map<String, Object> userMap = new LinkedHashMap<>();
-            userMap.put("username", user.username());
-            userMap.put("password", user.password());
-            userMap.put("roles", new ArrayList<>(user.roles()));
+            userMap.put("username", user.getUsername());
+            userMap.put("password", user.getPassword());
+            userMap.put("roles", new ArrayList<>(user.getRoles()));
             usersList.add(userMap);
         }
 

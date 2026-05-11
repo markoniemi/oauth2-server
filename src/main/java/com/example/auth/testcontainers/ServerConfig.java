@@ -28,8 +28,8 @@ public class ServerConfig {
     private static void validateNoDuplicateUsernames(List<User> users) {
         Set<String> seen = new HashSet<>();
         for (User user : users) {
-            if (!seen.add(user.username())) {
-                throw new IllegalArgumentException("Username '" + user.username() + "' is duplicated");
+            if (!seen.add(user.getUsername())) {
+                throw new IllegalArgumentException("Username '" + user.getUsername() + "' is duplicated");
             }
         }
     }

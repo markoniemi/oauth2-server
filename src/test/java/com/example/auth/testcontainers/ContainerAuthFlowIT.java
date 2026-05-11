@@ -100,6 +100,7 @@ public class ContainerAuthFlowIT {
             "Discovery endpoint should be accessible");
 
         ObjectMapper mapper = new ObjectMapper();
+        @SuppressWarnings("unchecked")
         Map<String, Object> discovery = mapper.readValue(response.getBody(), Map.class);
 
         assertTrue(discovery.containsKey("issuer"), "Should have issuer");
