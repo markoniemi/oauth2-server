@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import org.springframework.util.CollectionUtils;
 import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.utility.DockerImageName;
 
 public class Container extends GenericContainer<Container> {
@@ -29,6 +30,7 @@ public class Container extends GenericContainer<Container> {
         super(DockerImageName.parse(IMAGE_NAME));
         withExposedPorts(AUTH_SERVER_PORT);
         withEnv("SPRING_PROFILES_ACTIVE", "testcontainers");
+        waitingFor(Wait.forHttp("/.well-known/openid-configuration").forStatusCode(200));
     }
 
     public Container withUser(String username, String password, String... roles) {
