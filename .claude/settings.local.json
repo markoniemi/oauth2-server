@@ -13,7 +13,10 @@
       "WebFetch(domain:serdaralkancode.medium.com)",
       "Bash(cp -r .claude/worktrees/oauth2-testcontainers/src/main/java/com/example/auth/testcontainers src/main/java/com/example/auth/)",
       "Bash(cp -r .claude/worktrees/oauth2-testcontainers/src/test/java/com/example/auth/testcontainers src/test/java/com/example/auth/)",
-      "PowerShell(Move-Item *)"
+      "PowerShell(Move-Item *)",
+      "mcp__plugin_playwright_playwright__browser_navigate",
+      "mcp__plugin_playwright_playwright__browser_snapshot",
+      "mcp__plugin_playwright_playwright__browser_click"
     ]
   }
 }

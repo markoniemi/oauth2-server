@@ -30,7 +30,7 @@ public class Container extends GenericContainer<Container> {
         super(DockerImageName.parse(IMAGE_NAME));
         withExposedPorts(AUTH_SERVER_PORT);
         withEnv("SPRING_PROFILES_ACTIVE", "testcontainers");
-        waitingFor(Wait.forHttp("/.well-known/openid-configuration").forStatusCode(200));
+        waitingFor(Wait.forListeningPort());
     }
 
     public Container withUser(String username, String password, String... roles) {
