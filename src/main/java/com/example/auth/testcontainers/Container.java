@@ -16,6 +16,7 @@ import org.springframework.util.CollectionUtils;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.utility.DockerImageName;
+import org.testcontainers.utility.MountableFile;
 
 public class Container extends GenericContainer<Container> {
 
@@ -143,8 +144,8 @@ public class Container extends GenericContainer<Container> {
         ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
         mapper.writeValue(configFile, root);
 
-        // Mount the temp file
-        withFileSystemBind(configFile.getAbsolutePath(), "/config/application.yaml");
+        // Copy file to container (works with Docker-in-Docker)
+        withCopyFileToContainer(MountableFile.forHostPath(configFile.getAbsolutePath()), "/config/application.yaml");
 
         // Register cleanup hook (will run when JVM exits)
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
