@@ -23,10 +23,4 @@ jobs:
           java-version: '21'
 
       - name: Build with Maven
-        run: mvn -B install
-
-      - name: JIB container build and publish
-        uses: MathieuSoysal/jib-container-publish.yml@v2.1.5
-        with:
-          registry: ghcr.io
-          password: ${{ secrets.PACKAGE_UPDATE_TOKEN }}
+        run: mvn -B install -Djib.to.auth.username=${{ github.actor }} -Djib.to.auth.password=${{ secrets.PACKAGE_UPDATE_TOKEN }}
