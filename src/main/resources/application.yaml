@@ -2,7 +2,7 @@ spring:
   application:
     name: auth-server
   config:
-    import: optional:classpath:/config/application.yaml
+    import: optional:classpath:/config/application.yaml,optional:classpath:/clients.yaml
   security:
     oauth2:
       authorizationserver:

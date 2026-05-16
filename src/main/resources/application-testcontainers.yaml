@@ -1,5 +1,3 @@
 spring:
   main:
     allow-bean-definition-overriding: true
-  autoconfigure:
-    include: com.example.auth.testcontainers.ClientConfig
