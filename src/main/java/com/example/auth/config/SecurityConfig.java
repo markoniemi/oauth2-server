@@ -16,6 +16,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
+import org.springframework.security.crypto.password.NoOpPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
@@ -61,16 +63,22 @@ public class SecurityConfig {
   }
 
   @Bean
-  public UserDetailsService userDetailsService(SecurityProperties securityProperties) {
+  public UserDetailsService userDetailsService(SecurityProperties securityProperties,
+      PasswordEncoder passwordEncoder) {
     List<UserDetails> users = securityProperties.getUsers().stream()
         .map(u -> User.builder()
             .username(u.getUsername())
-            .password(u.getPassword())
+            .password(passwordEncoder.encode(u.getPassword()))
             .roles(u.getRoles().toArray(new String[0]))
             .build())
         .collect(Collectors.toList());
 
     return new InMemoryUserDetailsManager(users);
+  }
+
+  @Bean
+  public PasswordEncoder passwordEncoder() {
+    return NoOpPasswordEncoder.getInstance();
   }
 
   @Bean
