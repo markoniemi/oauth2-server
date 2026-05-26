@@ -99,6 +99,15 @@ public class Container extends GenericContainer<Container> {
     }
 
     @Override
+    public void stop() {
+        try {
+            super.stop();
+        } finally {
+            ClientConfig.clearClients();
+        }
+    }
+
+    @Override
     protected void configure() {
         try {
             generateAndMountUsersYaml();
