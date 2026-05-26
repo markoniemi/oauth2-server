@@ -26,6 +26,10 @@ public class ClientConfig {
         ClientConfig.clients = new ArrayList<>(clients);
     }
 
+    public static void clearClients() {
+        ClientConfig.clients = null;
+    }
+
     @Bean
     @Primary
     public RegisteredClientRepository registeredClientRepository(ClientProperties clientProperties) {
