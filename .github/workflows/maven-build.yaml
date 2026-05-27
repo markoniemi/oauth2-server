@@ -25,7 +25,7 @@ jobs:
           java-version: '21'
 
       - name: Build with Maven
-        run: mvn -B install --no-transfer-progress
+        run: mvn -B install --no-transfer-progress -Djib.to.auth.username=${{ github.actor }} -Djib.to.auth.password=${{ secrets.PACKAGE_UPDATE_TOKEN }}
 
       - name: JIB container build and publish
         uses: MathieuSoysal/jib-container-publish.yml@v2.1.5
