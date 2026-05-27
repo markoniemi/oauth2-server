@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import java.io.File;
 import java.io.IOException;
+import java.time.Duration;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -31,9 +32,9 @@ public class Container extends GenericContainer<Container> {
         super(DockerImageName.parse(IMAGE_NAME));
         withExposedPorts(AUTH_SERVER_PORT);
         withEnv("SPRING_PROFILES_ACTIVE", "testcontainers");
-        waitingFor(Wait.forHttp("/.well-known/openid-configuration")
+        waitingFor(Wait.forHttp("/actuator/health")
             .forStatusCode(200)
-            .withStartupTimeout(java.time.Duration.ofSeconds(30)));
+            .withStartupTimeout(Duration.ofMinutes(2)));
     }
 
     public Container withUser(String username, String password, String... roles) {
