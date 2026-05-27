@@ -33,7 +33,7 @@ public class ContainerAuthFlowIT {
 
         // Wait for container to be ready
         Awaitility.await()
-            .atMost(30, TimeUnit.SECONDS)
+            .atMost(60, TimeUnit.SECONDS)
             .pollInterval(1, TimeUnit.SECONDS)
             .ignoreExceptions()
             .until(() -> {
