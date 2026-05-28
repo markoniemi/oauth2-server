@@ -9,7 +9,6 @@ This library provides a TestContainers extension that:
 - Configures users and roles for authentication testing
 - Registers OAuth2 clients programmatically
 - Supports custom issuer URLs and context paths
-- Loads configuration from YAML files
 - Provides fluent builder API for easy setup
 
 ## Dependencies
@@ -65,43 +64,6 @@ container = new Container()
 container.start();
 ```
 
-### Loading Configuration from YAML Files
-
-Create a YAML file at `src/test/resources/test-config.yaml`:
-
-```yaml
-app:
-  security:
-    users:
-      - username: user1
-        password: password1
-        roles:
-          - USER
-      - username: admin
-        password: password2
-        roles:
-          - ADMIN
-          - USER
-```
-
-Then load it:
-
-```java
-container = new Container()
-    .withConfigFile("classpath:test-config.yaml");
-container.start();
-```
-
-### Mixing File and Fluent Configuration
-
-You can combine both approaches:
-
-```java
-container = new Container()
-    .withConfigFile("classpath:base-config.yaml")
-    .withUser("extra-user", "extra-pass", "USER");  // Adds to file-based config
-container.start();
-```
 
 ### Custom Issuer URL and Context Path
 
@@ -126,9 +88,6 @@ Main entry point for the TestContainers integration.
 
 - `withUser(String username, String password, String... roles)` - Add a user with roles
 - `withOAuth2Client(Client client)` - Register an OAuth2 client
-- `withConfigFile(String filePath)` - Load configuration from YAML file
-  - Supports `classpath:` prefix for resources on the classpath
-  - Also supports filesystem paths
 - `withIssuerUrl(String issuerUrl)` - Set custom issuer URL
 - `withContextPath(String contextPath)` - Set custom context path
 - `getAuthServerUrl()` - Get the server URL (http://localhost:mappedPort)
@@ -224,37 +183,11 @@ public class OAuth2AuthenticationIT {
 }
 ```
 
-## Configuration File Format
-
-YAML files should follow this structure:
-
-```yaml
-app:
-  security:
-    users:
-      - username: user1
-        password: password1
-        roles:
-          - USER
-          - VIEWER
-      - username: admin
-        password: password2
-        roles:
-          - ADMIN
-          - USER
-```
-
 ## Troubleshooting
 
 ### Container fails to start
 
 Ensure Docker is running and accessible. TestContainers will automatically detect your Docker environment (Npipe on Windows, Unix socket on Linux/macOS).
-
-### Users not being loaded from file
-
-- Verify the YAML file is on the classpath (in `src/test/resources`)
-- Check that the YAML structure matches the expected format (see above)
-- Ensure usernames and passwords don't contain special characters that need escaping
 
 ### Ports in use
 

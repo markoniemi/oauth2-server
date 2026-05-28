@@ -53,7 +53,6 @@ String authServerUrl = container.getAuthServerUrl();
 - Spin up auth server in Docker during tests
 - Fluent API for configuration
 - User and OAuth2 client registration
-- YAML-based configuration support
 - Custom issuer URL and context path support
 
 ## Architecture
@@ -101,10 +100,10 @@ mvn test -Dtest=ContainerIT
 
 ### Test Coverage
 
-- **58 tests** — All passing
-  - 21 unit tests for data classes and builders
+- **55 tests** — All passing
+  - 17 unit tests for data classes and builders
   - 21 integration tests for complete auth server feature
-  - 16 container-specific integration tests
+  - 17 container-specific integration tests
 
 ## Requirements
 
