@@ -29,12 +29,12 @@ public class ClientConfig {
     }
 
     @Bean
-    public RegisteredClientRepository registeredClientRepository() {
+    public RegisteredClientRepository testcontainersRegisteredClientRepository() {
         if (clients != null) {
             return createFromTestContainersClients(clients);
         }
-        // Default client for AuthServerIT and other non-testcontainer tests
-        RegisteredClient defaultClient = RegisteredClient.withId(UUID.randomUUID().toString())
+        // Fallback: provide native config client from test resources
+        RegisteredClient nativeClient = RegisteredClient.withId(UUID.randomUUID().toString())
             .clientId("frontend-client")
             .clientSecret(null)
             .clientAuthenticationMethod(ClientAuthenticationMethod.NONE)
@@ -52,7 +52,7 @@ public class ClientConfig {
                 .refreshTokenTimeToLive(Duration.ofDays(7))
                 .build())
             .build();
-        return new InMemoryRegisteredClientRepository(defaultClient);
+        return new InMemoryRegisteredClientRepository(nativeClient);
     }
 
     private RegisteredClientRepository createFromTestContainersClients(List<Client> clientList) {
