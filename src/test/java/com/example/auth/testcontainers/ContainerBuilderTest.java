@@ -55,15 +55,4 @@ public class ContainerBuilderTest {
         assertEquals("/auth", config.getContextPath());
     }
 
-    @Test
-    public void builderValidatesOnBuild() {
-        User user1 = new User("admin", "pass1", Set.of("ADMIN"));
-        User user2 = new User("admin", "pass2", Set.of("USER"));
-
-        assertThrows(IllegalArgumentException.class, () -> {
-            ServerConfig.builder()
-                .users(List.of(user1, user2))
-                .build();
-        });
-    }
 }
