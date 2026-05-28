@@ -50,50 +50,6 @@ public class Container extends GenericContainer<Container> {
         return this;
     }
 
-    public Container withConfigFile(String filePath) {
-        try {
-            String resolvedPath = filePath;
-            if (filePath.startsWith("classpath:")) {
-                resolvedPath = filePath.substring("classpath:".length());
-                ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-                var resource = classLoader.getResource(resolvedPath);
-                if (resource == null) {
-                    throw new IllegalArgumentException("Classpath resource not found: " + resolvedPath);
-                }
-                resolvedPath = resource.getPath();
-            }
-
-            ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
-            @SuppressWarnings("unchecked")
-            Map<String, Object> yaml = mapper.readValue(new File(resolvedPath), Map.class);
-
-            @SuppressWarnings("unchecked")
-            Map<String, Object> app = (Map<String, Object>) yaml.get("app");
-            if (app != null) {
-                @SuppressWarnings("unchecked")
-                Map<String, Object> security = (Map<String, Object>) app.get("security");
-                if (security != null) {
-                    @SuppressWarnings("unchecked")
-                    List<Map<String, Object>> usersList = (List<Map<String, Object>>) security.get("users");
-                    if (usersList != null) {
-                        for (Map<String, Object> u : usersList) {
-                            String username = (String) u.get("username");
-                            String password = (String) u.get("password");
-                            @SuppressWarnings("unchecked")
-                            List<String> roles = (List<String>) u.get("roles");
-                            if (username != null && password != null && roles != null && !roles.isEmpty()) {
-                                users.add(new User(username, password, new HashSet<>(roles)));
-                            }
-                        }
-                    }
-                }
-            }
-            return this;
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to load config file: " + filePath, e);
-        }
-    }
-
     public String getAuthServerUrl() {
         return "http://localhost:" + getMappedPort(AUTH_SERVER_PORT);
     }
