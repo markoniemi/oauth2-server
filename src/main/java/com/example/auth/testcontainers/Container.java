@@ -13,7 +13,6 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import org.springframework.util.CollectionUtils;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.utility.DockerImageName;
@@ -31,14 +30,13 @@ public class Container extends GenericContainer<Container> {
     public Container() {
         super(DockerImageName.parse(IMAGE_NAME));
         withExposedPorts(AUTH_SERVER_PORT);
-        withEnv("SPRING_PROFILES_ACTIVE", "testcontainers");
         waitingFor(Wait.forHttp("/actuator/health")
             .forStatusCode(200)
             .withStartupTimeout(Duration.ofMinutes(2)));
     }
 
     public Container withUser(String username, String password, String... roles) {
-        users.add(new User(username, password, new HashSet<>(asList( roles))));
+        users.add(new User(username, password, new HashSet<>(asList(roles))));
         return this;
     }
 
@@ -55,8 +53,6 @@ public class Container extends GenericContainer<Container> {
     public Container withConfigFile(String filePath) {
         try {
             String resolvedPath = filePath;
-
-            // Handle classpath resources
             if (filePath.startsWith("classpath:")) {
                 resolvedPath = filePath.substring("classpath:".length());
                 ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
@@ -67,26 +63,31 @@ public class Container extends GenericContainer<Container> {
                 resolvedPath = resource.getPath();
             }
 
-            // Load YAML and deserialize
             ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
             @SuppressWarnings("unchecked")
             Map<String, Object> yaml = mapper.readValue(new File(resolvedPath), Map.class);
 
-            // Extract app.security and map to SecurityConfig
             @SuppressWarnings("unchecked")
             Map<String, Object> app = (Map<String, Object>) yaml.get("app");
             if (app != null) {
-                Object security = app.get("security");
+                @SuppressWarnings("unchecked")
+                Map<String, Object> security = (Map<String, Object>) app.get("security");
                 if (security != null) {
-                    SecurityConfig config = mapper.convertValue(security, SecurityConfig.class);
-                    for (UserConfig userConfig : config.getUsers()) {
-                        if (userConfig.getUsername() != null && userConfig.getPassword() != null && !userConfig.getRoles().isEmpty()) {
-                            users.add(userConfig.toUser());
+                    @SuppressWarnings("unchecked")
+                    List<Map<String, Object>> usersList = (List<Map<String, Object>>) security.get("users");
+                    if (usersList != null) {
+                        for (Map<String, Object> u : usersList) {
+                            String username = (String) u.get("username");
+                            String password = (String) u.get("password");
+                            @SuppressWarnings("unchecked")
+                            List<String> roles = (List<String>) u.get("roles");
+                            if (username != null && password != null && roles != null && !roles.isEmpty()) {
+                                users.add(new User(username, password, new HashSet<>(roles)));
+                            }
                         }
                     }
                 }
             }
-
             return this;
         } catch (Exception e) {
             throw new RuntimeException("Failed to load config file: " + filePath, e);
@@ -105,59 +106,72 @@ public class Container extends GenericContainer<Container> {
     }
 
     @Override
-    public void stop() {
-        try {
-            super.stop();
-        } finally {
-            ClientConfig.clearClients();
-        }
-    }
-
-    @Override
     protected void configure() {
         try {
-            generateAndMountUsersYaml();
-            registerClients();
+            generateAndMountConfigYaml();
         } catch (IOException e) {
             throw new RuntimeException("Failed to configure container", e);
         }
     }
 
-    private void generateAndMountUsersYaml() throws IOException {
-        if (users.isEmpty()) {
-            return;  // No users to configure
+    private void generateAndMountConfigYaml() throws IOException {
+        if (users.isEmpty() && clients.isEmpty()) {
+            return;
         }
-
-        // Build YAML structure
-        Map<String, Object> appConfig = new LinkedHashMap<>();
-        Map<String, Object> securityConfig = new LinkedHashMap<>();
-        List<Map<String, Object>> usersList = new ArrayList<>();
-
-        for (User user : users) {
-            Map<String, Object> userMap = new LinkedHashMap<>();
-            userMap.put("username", user.getUsername());
-            userMap.put("password", user.getPassword());
-            userMap.put("roles", new ArrayList<>(user.getRoles()));
-            usersList.add(userMap);
-        }
-
-        securityConfig.put("users", usersList);
-        appConfig.put("security", securityConfig);
 
         Map<String, Object> root = new LinkedHashMap<>();
-        root.put("app", appConfig);
 
-        // Write to temp file
+        if (!users.isEmpty()) {
+            List<Map<String, Object>> usersList = new ArrayList<>();
+            for (User user : users) {
+                Map<String, Object> userMap = new LinkedHashMap<>();
+                userMap.put("username", user.getUsername());
+                userMap.put("password", user.getPassword());
+                userMap.put("roles", new ArrayList<>(user.getRoles()));
+                usersList.add(userMap);
+            }
+            Map<String, Object> securityMap = new LinkedHashMap<>();
+            securityMap.put("users", usersList);
+            Map<String, Object> appMap = new LinkedHashMap<>();
+            appMap.put("security", securityMap);
+            root.put("app", appMap);
+        }
+
+        if (!clients.isEmpty()) {
+            Map<String, Object> clientsMap = new LinkedHashMap<>();
+            for (Client client : clients) {
+                Map<String, Object> registration = new LinkedHashMap<>();
+                registration.put("client-id", client.getClientId());
+                registration.put("client-secret", client.getClientSecret());
+                registration.put("client-authentication-methods", List.of("client_secret_basic"));
+                registration.put("authorization-grant-types", new ArrayList<>(client.getGrantTypes()));
+                registration.put("redirect-uris", new ArrayList<>(client.getRedirectUris()));
+                registration.put("scopes", new ArrayList<>(client.getScopes()));
+
+                Map<String, Object> clientEntry = new LinkedHashMap<>();
+                clientEntry.put("registration", registration);
+                clientsMap.put(client.getClientId(), clientEntry);
+            }
+
+            Map<String, Object> authserverMap = new LinkedHashMap<>();
+            authserverMap.put("client", clientsMap);
+            Map<String, Object> oauth2Map = new LinkedHashMap<>();
+            oauth2Map.put("authorizationserver", authserverMap);
+            Map<String, Object> secMap = new LinkedHashMap<>();
+            secMap.put("oauth2", oauth2Map);
+            Map<String, Object> springMap = new LinkedHashMap<>();
+            springMap.put("security", secMap);
+            root.put("spring", springMap);
+        }
+
         File tempDir = Files.createTempDirectory("oauth2-config-").toFile();
         File configFile = new File(tempDir, "application.yaml");
+        new ObjectMapper(new YAMLFactory()).writeValue(configFile, root);
 
-        ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
-        mapper.writeValue(configFile, root);
+        withCopyFileToContainer(
+            MountableFile.forHostPath(configFile.getAbsolutePath()),
+            "/config/application.yaml");
 
-        // Copy file to container (works with Docker-in-Docker)
-        withCopyFileToContainer(MountableFile.forHostPath(configFile.getAbsolutePath()), "/config/application.yaml");
-
-        // Register cleanup hook (will run when JVM exits)
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             try {
                 Files.delete(configFile.toPath());
@@ -166,11 +180,5 @@ public class Container extends GenericContainer<Container> {
                 // Ignore cleanup errors
             }
         }));
-    }
-
-    private void registerClients() {
-        if (!CollectionUtils.isEmpty(clients)) {
-            ClientConfig.setClients(new ArrayList<>(clients));
-        }
     }
 }
