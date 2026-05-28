@@ -28,6 +28,10 @@ public class ClientConfig {
         ClientConfig.clients = null;
     }
 
+    public static List<Client> getClients() {
+        return clients;
+    }
+
     @Bean
     public RegisteredClientRepository testcontainersRegisteredClientRepository() {
         if (clients != null) {

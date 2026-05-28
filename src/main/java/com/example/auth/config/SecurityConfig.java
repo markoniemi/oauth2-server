@@ -1,8 +1,13 @@
 package com.example.auth.config;
 
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
+
+import com.example.auth.testcontainers.Client;
+import com.example.auth.testcontainers.ClientConfig;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -90,9 +95,28 @@ public class SecurityConfig {
 
   @Bean
   public CorsConfigurationSource corsConfigurationSource() {
+    Set<String> origins = new HashSet<>();
+
+    List<Client> clients = ClientConfig.getClients();
+    if (clients != null) {
+      clients.forEach(client ->
+          client.getRedirectUris().forEach(uri -> {
+            try {
+              origins.add(new java.net.URI(uri).getScheme() + "://" + new java.net.URI(uri).getAuthority());
+            } catch (java.net.URISyntaxException e) {
+              origins.add(uri);
+            }
+          })
+      );
+    }
+
+    if (origins.isEmpty()) {
+      origins.add("http://localhost:8080");
+      origins.add("http://localhost:5173");
+    }
+
     CorsConfiguration configuration = new CorsConfiguration();
-    configuration.setAllowedOrigins(
-        Arrays.asList("http://localhost:8080", "http://localhost:5173"));
+    configuration.setAllowedOrigins(new ArrayList<>(origins));
     configuration.setAllowedMethods(List.of("*"));
     configuration.setAllowedHeaders(List.of("*"));
     configuration.setAllowCredentials(true);
