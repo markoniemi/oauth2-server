@@ -32,7 +32,8 @@ public class ClientConfig {
 
     @Bean
     @Primary
-    public RegisteredClientRepository registeredClientRepository(ClientProperties clientProperties) {
+    public RegisteredClientRepository testcontainersRegisteredClientRepository(
+        ClientProperties clientProperties) {
         List<RegisteredClient> registeredClients = new ArrayList<>();
 
         if (clients != null) {

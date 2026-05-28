@@ -33,13 +33,13 @@ public class ClientConfigTest {
 
         ClientConfig clientConfig = new ClientConfig();
         RegisteredClientRepository customClientRepository =
-            clientConfig.registeredClientRepository(clientProperties);
+            clientConfig.testcontainersRegisteredClientRepository(clientProperties);
         assertNotNull(customClientRepository.findByClientId("test-client"));
 
         ClientConfig.clearClients();
 
         RegisteredClientRepository propertyClientRepository =
-            clientConfig.registeredClientRepository(clientProperties);
+            clientConfig.testcontainersRegisteredClientRepository(clientProperties);
         assertNotNull(propertyClientRepository.findByClientId("frontend-client"));
         assertNull(propertyClientRepository.findByClientId("test-client"));
     }
