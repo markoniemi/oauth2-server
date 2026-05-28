@@ -9,10 +9,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.client.RestClient;
-import org.testcontainers.shaded.org.awaitility.Awaitility;
 
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -30,24 +28,6 @@ public class ContainerAuthFlowIT {
                     .withScopes("openid", "profile")
             );
         container.start();
-
-        // Wait for container to be ready
-        Awaitility.await()
-            .atMost(60, TimeUnit.SECONDS)
-            .pollInterval(1, TimeUnit.SECONDS)
-            .ignoreExceptions()
-            .until(() -> {
-                try {
-                    RestClient client = RestClient.create();
-                    var response = client.get()
-                        .uri(container.getAuthServerUrl() + "/.well-known/openid-configuration")
-                        .retrieve()
-                        .toEntity(String.class);
-                    return response.getStatusCode().is2xxSuccessful();
-                } catch (Exception e) {
-                    return false;
-                }
-            });
     }
 
     @AfterAll
