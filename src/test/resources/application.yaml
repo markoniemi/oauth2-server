@@ -1,0 +1,12 @@
+app:
+  security:
+    users:
+      - username: admin
+        password: admin
+        roles:
+          - USER
+          - ADMIN
+      - username: user
+        password: user
+        roles:
+          - USER
