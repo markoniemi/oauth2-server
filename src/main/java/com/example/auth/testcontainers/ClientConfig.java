@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
@@ -15,6 +16,7 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
 import org.springframework.security.oauth2.server.authorization.settings.TokenSettings;
 
+@Slf4j
 @Configuration
 public class ClientConfig {
 
@@ -35,6 +37,7 @@ public class ClientConfig {
     @Bean
     public RegisteredClientRepository testcontainersRegisteredClientRepository() {
         if (clients != null) {
+            log.debug("Clients ({}): {}", clients.size(), clients);
             return createFromTestContainersClients(clients);
         }
         // Fallback: provide native config client from test resources
@@ -56,6 +59,7 @@ public class ClientConfig {
                 .refreshTokenTimeToLive(Duration.ofDays(7))
                 .build())
             .build();
+        log.debug("Clients (1): [Client(clientId=frontend-client, ...)]");
         return new InMemoryRegisteredClientRepository(nativeClient);
     }
 

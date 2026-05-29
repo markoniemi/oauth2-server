@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import com.example.auth.testcontainers.Client;
 import com.example.auth.testcontainers.ClientConfig;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -33,6 +34,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+@Slf4j
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
@@ -78,6 +80,8 @@ public class SecurityConfig {
             .build())
         .collect(Collectors.toList());
 
+    log.debug("Users ({}): {}", securityProperties.getUsers().size(), securityProperties.getUsers());
+
     return new InMemoryUserDetailsManager(users);
   }
 
@@ -114,6 +118,8 @@ public class SecurityConfig {
       origins.add("http://localhost:8080");
       origins.add("http://localhost:5173");
     }
+
+    log.debug("CORS allowed origins: {}", origins);
 
     CorsConfiguration configuration = new CorsConfiguration();
     configuration.setAllowedOrigins(new ArrayList<>(origins));

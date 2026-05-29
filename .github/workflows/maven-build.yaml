@@ -36,4 +36,4 @@ jobs:
           java-version: '21'
 
       - name: Build with Maven
-        run: mvn -B install -Djib.to.auth.username=${{ github.actor }} -Djib.to.auth.password=${{ secrets.PACKAGE_UPDATE_TOKEN }}
+        run: mvn -B install -Djib.to.auth.username=${{ github.actor }} -Djib.to.auth.password=${{ secrets.PACKAGE_UPDATE_TOKEN }} -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn
