@@ -67,9 +67,9 @@ public class ConfigFileAuthFlowIT {
         HtmlInput passwordInput = loginPage.querySelector("input[name='password']");
         HtmlButton signInButton = loginPage.querySelector("button");
 
-        assertNotNull(usernameInput, "Username input should exist");
-        assertNotNull(passwordInput, "Password input should exist");
-        assertNotNull(signInButton, "Sign in button should exist");
+        assertNotNull(usernameInput);
+        assertNotNull(passwordInput);
+        assertNotNull(signInButton);
 
         usernameInput.type("config-admin");
         passwordInput.type("password123");
@@ -80,8 +80,7 @@ public class ConfigFileAuthFlowIT {
         var responseAfterLogin = pageAfterLogin.getWebResponse();
 
         // Should redirect (302) back to authorization endpoint
-        assertEquals(302, responseAfterLogin.getStatusCode(),
-            "Login should result in 302 redirect");
+        assertEquals(302, responseAfterLogin.getStatusCode());
     }
 
     @Test
@@ -104,8 +103,7 @@ public class ConfigFileAuthFlowIT {
 
             // Verify token endpoint is reachable with config-client
             assertTrue(tokenResponse.getStatusCode().is2xxSuccessful() ||
-                tokenResponse.getStatusCode().is4xxClientError(),
-                "Token endpoint should respond to config-client request");
+                tokenResponse.getStatusCode().is4xxClientError());
         } catch (Exception e) {
             // Network issues acceptable in test environment
             assertTrue(container.isRunning());
@@ -122,8 +120,7 @@ public class ConfigFileAuthFlowIT {
             .retrieve()
             .toEntity(String.class);
 
-        assertEquals(200, response.getStatusCode().value(),
-            "Discovery endpoint should be accessible with config file");
+        assertEquals(200, response.getStatusCode().value());
 
         ObjectMapper mapper = new ObjectMapper();
         @SuppressWarnings("unchecked")
