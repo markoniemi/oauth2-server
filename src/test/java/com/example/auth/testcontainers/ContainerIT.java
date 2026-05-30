@@ -65,4 +65,25 @@ public class ContainerIT {
             testContainer.stop();
         }
     }
+
+    @Test
+    public void loadUsersAndClientsFromConfigFile() throws Exception {
+        Container testContainer = new Container()
+            .withConfigFile("test-config.yaml");
+
+        testContainer.start();
+
+        try {
+            assertTrue(testContainer.isRunning());
+            assertFalse(testContainer.getUsers().isEmpty());
+            assertFalse(testContainer.getClients().isEmpty());
+
+            assertTrue(testContainer.getUsers().stream()
+                .anyMatch(u -> "config-admin".equals(u.getUsername())));
+            assertTrue(testContainer.getClients().stream()
+                .anyMatch(c -> "config-client".equals(c.getClientId())));
+        } finally {
+            testContainer.stop();
+        }
+    }
 }

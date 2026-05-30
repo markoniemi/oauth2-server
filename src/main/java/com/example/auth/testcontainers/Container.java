@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.time.Duration;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -50,6 +51,83 @@ public class Container extends GenericContainer<Container> {
         return this;
     }
 
+    public Container withConfigFile(String configResourcePath) throws IOException {
+        try (InputStream is = getClass().getClassLoader().getResourceAsStream(configResourcePath)) {
+            if (is == null) {
+                throw new IOException("Config file not found: " + configResourcePath);
+            }
+            ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+            Map<String, Object> config = mapper.readValue(is, Map.class);
+            loadUsersFromConfig(config);
+            loadClientsFromConfig(config);
+        }
+        return this;
+    }
+
+    @SuppressWarnings("unchecked")
+    private void loadUsersFromConfig(Map<String, Object> config) {
+        Map<String, Object> app = (Map<String, Object>) config.get("app");
+        if (app != null) {
+            Map<String, Object> security = (Map<String, Object>) app.get("security");
+            if (security != null) {
+                List<Map<String, Object>> usersList = (List<Map<String, Object>>) security.get("users");
+                if (usersList != null) {
+                    for (Map<String, Object> userMap : usersList) {
+                        String username = (String) userMap.get("username");
+                        String password = (String) userMap.get("password");
+                        List<String> roles = (List<String>) userMap.get("roles");
+                        if (roles == null) {
+                            roles = new ArrayList<>();
+                        }
+                        users.add(new User(username, password, new HashSet<>(roles)));
+                    }
+                }
+            }
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void loadClientsFromConfig(Map<String, Object> config) {
+        Map<String, Object> spring = (Map<String, Object>) config.get("spring");
+        if (spring != null) {
+            Map<String, Object> security = (Map<String, Object>) spring.get("security");
+            if (security != null) {
+                Map<String, Object> oauth2 = (Map<String, Object>) security.get("oauth2");
+                if (oauth2 != null) {
+                    Map<String, Object> authserver = (Map<String, Object>) oauth2.get("authorizationserver");
+                    if (authserver != null) {
+                        Map<String, Object> clientMap = (Map<String, Object>) authserver.get("client");
+                        if (clientMap != null) {
+                            for (Map.Entry<String, Object> entry : clientMap.entrySet()) {
+                                Map<String, Object> clientEntry = (Map<String, Object>) entry.getValue();
+                                Map<String, Object> registration = (Map<String, Object>) clientEntry.get("registration");
+                                if (registration != null) {
+                                    String clientId = (String) registration.get("client-id");
+                                    String clientSecret = (String) registration.get("client-secret");
+                                    List<String> redirectUris = (List<String>) registration.get("redirect-uris");
+                                    List<String> scopes = (List<String>) registration.get("scopes");
+                                    List<String> grantTypes = (List<String>) registration.get("authorization-grant-types");
+
+                                    Client client = new Client(clientId, clientSecret);
+                                    if (redirectUris != null) {
+                                        client = client.withRedirectUris(redirectUris.toArray(new String[0]));
+                                    }
+                                    if (scopes != null) {
+                                        client = client.withScopes(scopes.toArray(new String[0]));
+                                    }
+                                    if (grantTypes != null) {
+                                        client = client.withGrantTypes(grantTypes.toArray(new String[0]));
+                                    }
+                                    clients.add(client);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     public String getAuthServerUrl() {
         return "http://localhost:" + getMappedPort(AUTH_SERVER_PORT);
     }
@@ -59,6 +137,14 @@ public class Container extends GenericContainer<Container> {
             return issuerUrl;
         }
         return getAuthServerUrl();
+    }
+
+    public List<User> getUsers() {
+        return users;
+    }
+
+    public List<Client> getClients() {
+        return clients;
     }
 
     @Override

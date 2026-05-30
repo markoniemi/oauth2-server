@@ -6,10 +6,6 @@ app:
         roles:
           - USER
           - ADMIN
-      - username: user
-        password: user
-        roles:
-          - USER
 
 spring:
   security:
@@ -24,16 +20,11 @@ spring:
               authorization-grant-types:
                 - authorization_code
               redirect-uris:
-                - http://localhost:8080
                 - http://localhost:5173
               post-logout-redirect-uris:
                 - http://localhost:5173
-                - http://localhost:8080
               scopes:
                 - openid
                 - profile
                 - email
             require-proof-key: true
-            token:
-              access-token-time-to-live: 1h
-              refresh-token-time-to-live: 7d

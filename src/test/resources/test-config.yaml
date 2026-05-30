@@ -1,0 +1,32 @@
+app:
+  security:
+    users:
+      - username: config-admin
+        password: password123
+        roles:
+          - ADMIN
+          - USER
+      - username: config-user
+        password: password456
+        roles:
+          - USER
+
+spring:
+  security:
+    oauth2:
+      authorizationserver:
+        client:
+          config-client:
+            registration:
+              client-id: config-client
+              client-secret: client-secret-123
+              client-authentication-methods:
+                - client_secret_basic
+              authorization-grant-types:
+                - authorization_code
+                - refresh_token
+              redirect-uris:
+                - http://localhost:3000/callback
+              scopes:
+                - openid
+                - profile
