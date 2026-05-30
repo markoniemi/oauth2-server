@@ -18,7 +18,7 @@ public class UserTest {
     public void usernameCannotBeBlank() {
         User user = new User("", "password", Set.of("USER"));
         Set<ConstraintViolation<User>> violations = validator.validate(user);
-        assertFalse(violations.isEmpty(), "Should have validation violations for blank username");
+        assertFalse(violations.isEmpty());
         assertTrue(violations.stream().anyMatch(v -> v.getPropertyPath().toString().equals("username")));
     }
 
@@ -26,7 +26,7 @@ public class UserTest {
     public void passwordCannotBeBlank() {
         User user = new User("admin", "", Set.of("USER"));
         Set<ConstraintViolation<User>> violations = validator.validate(user);
-        assertFalse(violations.isEmpty(), "Should have validation violations for blank password");
+        assertFalse(violations.isEmpty());
         assertTrue(violations.stream().anyMatch(v -> v.getPropertyPath().toString().equals("password")));
     }
 
@@ -34,7 +34,7 @@ public class UserTest {
     public void rolesCannotBeEmpty() {
         User user = new User("admin", "password", Set.of());
         Set<ConstraintViolation<User>> violations = validator.validate(user);
-        assertFalse(violations.isEmpty(), "Should have validation violations for empty roles");
+        assertFalse(violations.isEmpty());
         assertTrue(violations.stream().anyMatch(v -> v.getPropertyPath().toString().equals("roles")));
     }
 
