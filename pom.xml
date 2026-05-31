@@ -107,6 +107,7 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
+                    <classifier>exec</classifier>
                     <excludes>
                         <exclude>
                             <groupId>org.projectlombok</groupId>
@@ -126,6 +127,9 @@
                     <to>
                         <image>ghcr.io/markoniemi/oauth2-server</image>
                     </to>
+                    <container>
+                        <mainClass>com.example.auth.AuthServerApplication</mainClass>
+                    </container>
                 </configuration>
                 <executions>
                     <execution>
