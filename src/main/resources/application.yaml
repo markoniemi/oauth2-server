@@ -7,7 +7,23 @@ spring:
     oauth2:
       authorizationserver:
         issuer: http://localhost:9000
-        client: {}
+        client:
+          frontend-client:
+            registration:
+              client-id: frontend-client
+              client-authentication-methods:
+                - none
+              authorization-grant-types:
+                - authorization_code
+              redirect-uris:
+                - http://localhost:5173
+              post-logout-redirect-uris:
+                - http://localhost:5173
+              scopes:
+                - openid
+                - profile
+                - email
+            require-proof-key: true
 
 server:
   port: 9000
@@ -16,4 +32,9 @@ server:
 
 app:
   security:
-    users: []
+    users:
+      - username: admin
+        password: admin
+        roles:
+          - USER
+          - ADMIN
