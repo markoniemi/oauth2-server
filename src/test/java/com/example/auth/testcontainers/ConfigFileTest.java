@@ -9,7 +9,7 @@ public class ConfigFileTest {
 
     @Test
     public void mountConfigFileFromClasspath() {
-        Container container = new Container()
+        OAuth2Container container = new OAuth2Container()
             .withConfigFile("test-config.yaml");
 
         container.start();
@@ -22,7 +22,7 @@ public class ConfigFileTest {
 
     @Test
     public void configFileNotFound() {
-        Container container = new Container();
+        OAuth2Container container = new OAuth2Container();
 
         assertThrows(IllegalArgumentException.class, () -> {
             container.withConfigFile("nonexistent.yaml");
@@ -31,7 +31,7 @@ public class ConfigFileTest {
 
     @Test
     public void configFileMountedToConfigPath() {
-        Container container = new Container()
+        OAuth2Container container = new OAuth2Container()
             .withConfigFile("test-config.yaml");
 
         container.start();
@@ -47,7 +47,7 @@ public class ConfigFileTest {
 
     @Test
     public void fluentApiAndConfigFileMixed() {
-        Container container = new Container()
+        OAuth2Container container = new OAuth2Container()
             .withConfigFile("test-config.yaml")
             .withUser("extra-user", "password", "EXTRA_ROLE")
             .withOAuth2Client(new Client("api-client", "secret")
@@ -69,7 +69,7 @@ public class ConfigFileTest {
 
     @Test
     public void configFileLoadsUserAndClientConfig() {
-        Container container = new Container()
+        OAuth2Container container = new OAuth2Container()
             .withConfigFile("test-config.yaml");
 
         container.start();

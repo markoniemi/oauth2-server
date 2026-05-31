@@ -19,12 +19,12 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class ConfigFileAuthFlowIT {
 
-    private static Container container;
+    private static OAuth2Container container;
     private WebClient webClient;
 
     @BeforeAll
     static void setUp() {
-        container = new Container()
+        container = new OAuth2Container()
             .withConfigFile("test-config.yaml");
         container.start();
     }

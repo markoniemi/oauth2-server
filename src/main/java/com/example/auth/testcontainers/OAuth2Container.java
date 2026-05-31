@@ -18,7 +18,7 @@ import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.utility.DockerImageName;
 import org.testcontainers.utility.MountableFile;
 
-public class Container extends GenericContainer<Container> {
+public class OAuth2Container extends GenericContainer<OAuth2Container> {
 
     private static final int AUTH_SERVER_PORT = 9000;
     private static final String IMAGE_NAME = "ghcr.io/markoniemi/oauth2-server:latest";
@@ -27,7 +27,7 @@ public class Container extends GenericContainer<Container> {
     private final List<Client> clients = new ArrayList<>();
     private String issuerUrl;
 
-    public Container() {
+    public OAuth2Container() {
         super(DockerImageName.parse(IMAGE_NAME));
         withExposedPorts(AUTH_SERVER_PORT);
         waitingFor(Wait.forHttp("/actuator/health")
@@ -35,22 +35,22 @@ public class Container extends GenericContainer<Container> {
             .withStartupTimeout(Duration.ofMinutes(2)));
     }
 
-    public Container withUser(String username, String password, String... roles) {
+    public OAuth2Container withUser(String username, String password, String... roles) {
         users.add(new User(username, password, new HashSet<>(asList(roles))));
         return this;
     }
 
-    public Container withOAuth2Client(Client client) {
+    public OAuth2Container withOAuth2Client(Client client) {
         clients.add(client);
         return this;
     }
 
-    public Container withIssuerUrl(String issuerUrl) {
+    public OAuth2Container withIssuerUrl(String issuerUrl) {
         this.issuerUrl = issuerUrl;
         return this;
     }
 
-    public Container withConfigFile(String configResourcePath) {
+    public OAuth2Container withConfigFile(String configResourcePath) {
         withCopyFileToContainer(
             MountableFile.forClasspathResource(configResourcePath),
             "/config/application.yaml");

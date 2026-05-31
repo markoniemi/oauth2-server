@@ -162,12 +162,10 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
-
     <distributionManagement>
         <repository>
-            <id>github</id>
-            <name>GitHub Packages</name>
-            <url>https://maven.pkg.github.com/markoniemi/oauth2-server</url>
+            <id>repsy</id>
+            <url>https://repo.repsy.io/mvn/markoniemi/maven</url>
         </repository>
     </distributionManagement>
 </project>

@@ -12,11 +12,11 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class ContainerClientsIT {
 
-    private static Container container;
+    private static OAuth2Container container;
 
     @BeforeAll
     static void setUp() {
-        container = new Container()
+        container = new OAuth2Container()
             .withUser("admin", "admin123", "ADMIN")
             .withOAuth2Client(
                 new Client("test-client", "test-secret")

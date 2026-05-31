@@ -7,11 +7,11 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class ContainerIT {
 
-    private static Container container;
+    private static OAuth2Container container;
 
     @BeforeAll
     static void setUp() {
-        container = new Container()
+        container = new OAuth2Container()
             .withUser("admin", "admin123", "ADMIN", "USER");
         container.start();
     }
@@ -52,7 +52,7 @@ public class ContainerIT {
 
     @Test
     public void yamlGenerationIncludesAllUsers() throws Exception {
-        Container testContainer = new Container()
+        OAuth2Container testContainer = new OAuth2Container()
             .withUser("user1", "pass1", "ADMIN")
             .withUser("user2", "pass2", "USER", "VIEWER");
 
@@ -68,7 +68,7 @@ public class ContainerIT {
 
     @Test
     public void loadUsersAndClientsFromConfigFile() throws Exception {
-        Container testContainer = new Container()
+        OAuth2Container testContainer = new OAuth2Container()
             .withConfigFile("test-config.yaml");
 
         testContainer.start();

@@ -16,12 +16,12 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class ContainerAuthFlowIT {
 
-    private static Container container;
+    private static OAuth2Container container;
     private WebClient webClient;
 
     @BeforeAll
     static void setUp() {
-        container = new Container()
+        container = new OAuth2Container()
             .withOAuth2Client(
                 new Client("test-frontend", "client-secret")
                     .withRedirectUris("http://localhost:8080/callback")
