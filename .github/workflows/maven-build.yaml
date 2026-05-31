@@ -28,10 +28,12 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
+
       - name: Set up Docker 29
         uses: docker/setup-docker-action@v5
         with:
-          version: v29.2.0
+          version: type=image,tag=29.2.0
+
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
