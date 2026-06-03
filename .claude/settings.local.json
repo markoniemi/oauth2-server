@@ -11,25 +11,11 @@
       "WebFetch(domain:docs.openrewrite.org)",
       "WebFetch(domain:ankurm.com)",
       "WebFetch(domain:serdaralkancode.medium.com)",
-      "Bash(cp -r .claude/worktrees/oauth2-testcontainers/src/main/java/com/example/auth/testcontainers src/main/java/com/example/auth/)",
-      "Bash(cp -r .claude/worktrees/oauth2-testcontainers/src/test/java/com/example/auth/testcontainers src/test/java/com/example/auth/)",
-      "PowerShell(Move-Item *)",
-      "mcp__plugin_playwright_playwright__browser_navigate",
-      "mcp__plugin_playwright_playwright__browser_snapshot",
-      "mcp__plugin_playwright_playwright__browser_click",
-      "mcp__plugin_playwright_playwright__browser_evaluate",
-      "mcp__plugin_playwright_playwright__browser_take_screenshot",
-      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\marko\\\\Documents\\\\Git\\\\oauth2-server\" -Recurse -Force)",
-      "Bash(Select-Object FullName, PSIsContainer)",
-      "Bash(Sort-Object FullName)",
-      "Bash(ConvertTo-Csv -NoTypeInformation)",
-      "Bash(Out-String)",
-      "Bash(cat)",
-      "Read(//tmp/**)",
-      "Bash(git add *)",
-      "Bash(git rm *)",
-      "Bash(git commit *)",
-      "Bash(./gradlew test *)"
+      "PowerShell(git *)",
+      "Bash(Get-ChildItem -Recurse -Filter \"*oauth*\" -ErrorAction SilentlyContinue)",
+      "Bash(Select-Object FullName)",
+      "Bash(gh api *)",
+      "WebFetch(domain:raw.githubusercontent.com)"
     ]
   }
 }
