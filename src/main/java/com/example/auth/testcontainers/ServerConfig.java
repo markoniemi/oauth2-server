@@ -1,11 +1,11 @@
 package com.example.auth.testcontainers;
 
 import lombok.Builder;
-import lombok.Data;
+import lombok.Value;
 import java.util.ArrayList;
 import java.util.List;
 
-@Data
+@Value
 @Builder
 public class ServerConfig {
     private final List<User> users;
