@@ -29,15 +29,35 @@ Reusable library for testing downstream applications:
 
 ### Key Components
 
-**Container** — Main entry point. Extends `GenericContainer<Container>` to manage the Docker container lifecycle and configuration.
+**OAuth2Container** — Main entry point. Extends `GenericContainer<OAuth2Container>` to manage the Docker container lifecycle and dynamic configuration.
+- `withUser(username, password, roles...)` — Add users programmatically
+- `withOAuth2Client(client)` — Add OAuth2 clients programmatically
+- `withConfigFile(path)` — Load configuration from mounted YAML file
+- Internally generates YAML and mounts to container for Spring Boot to load
 
-**Client & User** — Data classes (Java records) representing registered clients and authentication users with validation.
+**Client & User** — Data classes representing registered clients and authentication users with validation.
 
-**ServerConfig** — Configuration aggregator supporting both fluent builder and YAML file-based setup.
-
-**ContainerRegisteredClientConfig** — Spring configuration class that registers clients into the authorization server's repository.
+**ServerConfig** — Configuration aggregator supporting fluent builder pattern for complex setups.
 
 For detailed information about coding conventions and development practices, refer to the [Copilot Instructions](../.github/copilot-instructions.md).
+
+## Simplification Initiative (In Progress)
+
+As of 2026-06-13, the project is undergoing simplification to reduce complexity and remove anti-patterns:
+
+### Current Work: `feature/simplify-config` branch
+- **Phase 1**: Unit tests for YAML generation ✓ In Progress
+- **Phase 2**: Remove ClientConfig static method anti-pattern (upcoming)
+- **Phase 3**: Simplify OAuth2Container YAML generation from maps to StringBuilder (upcoming)
+- **Phase 4**: Verify against dynamic-form project in GitHub Actions (upcoming)
+- **Phase 5**: Documentation updates (upcoming)
+
+See [SIMPLIFICATION_PLAN.md](../SIMPLIFICATION_PLAN.md) for detailed implementation plan.
+
+### Impact on TestContainers Users
+- ✅ **Public API unchanged** — No code changes needed in consuming projects (like dynamic-form)
+- ✅ **Dynamic configuration still works** — `withUser()` and `withOAuth2Client()` behavior unchanged
+- ✅ **Backward compatible** — Existing code will continue to work without modifications
 
 ## Git Commit Messages
 

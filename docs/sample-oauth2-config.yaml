@@ -1,0 +1,82 @@
+# Sample OAuth2 Configuration for oauth2-server
+# This file demonstrates how to configure users and OAuth2 clients
+# for the TestContainers integration or Docker deployment.
+
+# Application-level configuration
+app:
+  security:
+    users:
+      # Define test users for authentication
+      - username: admin
+        password: admin
+        roles:
+          - ADMIN
+          - USER
+
+      - username: user
+        password: user
+        roles:
+          - USER
+
+      - username: viewer
+        password: viewer
+        roles:
+          - VIEWER
+
+# Spring Security OAuth2 Authorization Server configuration
+spring:
+  security:
+    oauth2:
+      authorizationserver:
+        issuer: http://localhost:9000
+
+        # OAuth2 registered clients
+        client:
+          frontend-client:
+            registration:
+              client-id: frontend-client
+              client-secret: ""  # Empty for PKCE flow (public client)
+              client-authentication-methods:
+                - none
+              authorization-grant-types:
+                - authorization_code
+              redirect-uris:
+                - http://localhost:8080
+                - http://localhost:5173
+              post-logout-redirect-uris:
+                - http://localhost:8080
+                - http://localhost:5173
+              scopes:
+                - openid
+                - profile
+                - email
+            require-proof-key: true  # PKCE required
+
+          # Example: Add another client for a backend service
+          backend-service:
+            registration:
+              client-id: backend-service
+              client-secret: backend-secret
+              client-authentication-methods:
+                - client_secret_basic
+              authorization-grant-types:
+                - client_credentials
+              scopes:
+                - api.read
+                - api.write
+
+# Usage with TestContainers:
+#
+# OAuth2Container container = new OAuth2Container()
+#     .withUser("admin", "admin", "ADMIN", "USER")
+#     .withUser("user", "user", "USER")
+#     .withOAuth2Client(new Client("frontend-client", "")
+#         .withRedirectUris("http://localhost:8080", "http://localhost:5173")
+#         .withScopes("openid", "profile", "email"))
+#     .start();
+#
+# Or mount an external config file:
+#
+# OAuth2Container container = new OAuth2Container()
+#     .withConfigFile("sample-oauth2-config.yaml")
+#     .start();
