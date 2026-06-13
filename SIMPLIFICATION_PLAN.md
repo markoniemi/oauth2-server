@@ -8,6 +8,51 @@ Simplify the oauth2-server implementation by removing complex configuration patt
 
 ---
 
+## Dependency Analysis: Impact on dynamic-form
+
+### Relationship Overview
+**dynamic-form depends on oauth2-server for testing:**
+```xml
+<!-- In dynamic-form/backend/pom.xml -->
+<dependency>
+    <groupId>com.example</groupId>
+    <artifactId>auth-server</artifactId>
+    <version>0.1-SNAPSHOT</version>
+    <scope>test</scope>  <!-- Only used in tests -->
+</dependency>
+```
+
+### Public API That dynamic-form Uses
+| Method | Current | After Changes | Breaking? |
+|--------|---------|---------------|-----------|
+| `withUser()` | ✓ Works | ✓ Works | No |
+| `withOAuth2Client()` | ✓ Works | ✓ Works | No |
+| `withConfigFile()` | ✓ Works | ✓ Works | No |
+| `start()` | ✓ Works | ✓ Works | No |
+| `getUsers()` | ✓ Works | ✓ Works | No |
+| `getClients()` | ✓ Works | ✓ Works | No |
+
+### Will dynamic-form Code Need Changes?
+**NO** ✅ — The public API is 100% unchanged
+
+Our changes are internal:
+- Removing ClientConfig (internal Spring bean, not used by dynamic-form)
+- Simplifying YAML generation (internal logic, not exposed to dynamic-form)
+
+### What Could Cause dynamic-form Tests to Fail?
+Only internal implementation issues:
+1. ❌ Invalid YAML syntax → Spring won't parse it → oauth2-server won't start
+2. ❌ Wrong YAML structure → Clients/users not registered → FrontendIT tests timeout
+3. ❌ Config mounting fails → Container doesn't have config → Tests fail
+
+### Testing Strategy
+**dynamic-form is the validation mechanism:**
+- If FrontendIT tests pass → oauth2-server works correctly
+- If FrontendIT tests fail → our changes broke something
+- No code changes needed in dynamic-form itself
+
+---
+
 ## Current State Analysis
 
 ### Problem 1: ClientConfig with Static Methods
@@ -151,6 +196,8 @@ private String generateConfigYaml() {
 - ✓ Unit tests pass locally
 - ✓ Integration tests pass locally
 
+**dynamic-form Impact:** None (public API unchanged)
+
 ---
 
 ### Phase 2: Remove ClientConfig
@@ -172,6 +219,15 @@ private String generateConfigYaml() {
 - ✓ oauth2-server builds without errors
 - ✓ Unit tests pass
 - ✓ No compilation errors referencing deleted class
+
+**Checkpoint: Test with dynamic-form locally**
+```bash
+cd dynamic-form
+mvn clean test -Dgroups=unit
+
+# If passes: ✅ Continue to Phase 3
+# If fails: ❌ Rollback Phase 2, debug, retry
+```
 
 ---
 
@@ -202,6 +258,21 @@ private String generateConfigYaml() {
 - ✓ Unit tests pass
 - ✓ Integration tests pass locally
 
+**Checkpoint: Full integration test with dynamic-form locally**
+```bash
+cd dynamic-form
+mvn clean verify  # Runs FrontendIT tests
+
+# Expected output:
+# [INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 60.82 s -- in com.example.backend.e2e.FrontendIT
+# [INFO] BUILD SUCCESS
+
+# If passes: ✅ Continue to Phase 4
+# If fails: ❌ Get logs, debug YAML generation, retry
+```
+
+**Key Test:** `loginAndFormSubmission()`, `editSubmission()`, `userAccessControlTest()` all must pass
+
 ---
 
 ### Phase 4: Verify Against dynamic-form in GitHub Actions
@@ -216,21 +287,48 @@ private String generateConfigYaml() {
 6. Run dynamic-form tests against new oauth2-server
 7. Monitor GitHub Actions for both projects
 
-**Dynamic-form Verification Checklist:**
-- ✓ oauth2-server builds successfully in GitHub Actions
-- ✓ Docker image published: `ghcr.io/markoniemi/oauth2-server:latest`
-- ✓ dynamic-form pulls new image
-- ✓ All FrontendIT tests pass (3/3)
-- ✓ All other tests pass
-- ✓ BUILD SUCCESS in GitHub Actions
+**GitHub Actions Verification Checkpoints:**
 
-**If Tests Fail:**
-1. Review GitHub Actions logs for both projects
-2. Identify which change caused the failure
-3. Roll back to previous commit
-4. Debug locally
-5. Re-implement fix
-6. Re-test
+**Checkpoint 4a: oauth2-server Build**
+```
+✓ Build with Maven succeeds
+✓ All tests pass in oauth2-server
+✓ Docker image published: ghcr.io/markoniemi/oauth2-server:latest
+✓ Run #X: BUILD SUCCESS
+```
+
+**Checkpoint 4b: dynamic-form Tests Against New Image**
+```
+✓ dynamic-form workflow triggered
+✓ Pulls latest oauth2-server Docker image
+✓ All FrontendIT tests pass (3/3):
+  - loginAndFormSubmission ✓
+  - editSubmission ✓
+  - userAccessControlTest ✓
+✓ Run #Y: BUILD SUCCESS
+
+Expected output:
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 60.82 s
+[INFO] backend ............................................ SUCCESS
+[INFO] BUILD SUCCESS
+```
+
+**If Tests Fail - Troubleshooting:**
+
+| Failure Point | Diagnosis | Fix |
+|---|---|---|
+| oauth2-server build fails | YAML generation invalid | Debug generateConfigYaml() |
+| Docker image not published | Build succeeded but publish failed | Check Docker registry permissions |
+| dynamic-form timeout | YAML not mounted properly | Verify mount path in OAuth2Container |
+| FrontendIT user fails | User not registered | Verify users list in YAML |
+| FrontendIT client fails | Client not registered | Verify client structure in YAML |
+
+**Rollback Process:**
+```bash
+git reset --hard origin/master
+# or
+git revert <commit-hash>
+```
 
 ---
 
