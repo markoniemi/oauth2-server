@@ -2,17 +2,13 @@ package com.example.auth.testcontainers;
 
 import static java.util.Arrays.asList;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import java.io.File;
 import java.io.IOException;
 import java.time.Duration;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.utility.DockerImageName;
@@ -90,54 +86,11 @@ public class OAuth2Container extends GenericContainer<OAuth2Container> {
             return;
         }
 
-        Map<String, Object> root = new LinkedHashMap<>();
-
-        if (!users.isEmpty()) {
-            List<Map<String, Object>> usersList = new ArrayList<>();
-            for (User user : users) {
-                Map<String, Object> userMap = new LinkedHashMap<>();
-                userMap.put("username", user.getUsername());
-                userMap.put("password", user.getPassword());
-                userMap.put("roles", new ArrayList<>(user.getRoles()));
-                usersList.add(userMap);
-            }
-            Map<String, Object> securityMap = new LinkedHashMap<>();
-            securityMap.put("users", usersList);
-            Map<String, Object> appMap = new LinkedHashMap<>();
-            appMap.put("security", securityMap);
-            root.put("app", appMap);
-        }
-
-        if (!clients.isEmpty()) {
-            Map<String, Object> clientsMap = new LinkedHashMap<>();
-            for (Client client : clients) {
-                Map<String, Object> registration = new LinkedHashMap<>();
-                registration.put("client-id", client.getClientId());
-                registration.put("client-secret", client.getClientSecret());
-                registration.put("client-authentication-methods", List.of("client_secret_basic"));
-                registration.put("authorization-grant-types", new ArrayList<>(client.getGrantTypes()));
-                registration.put("redirect-uris", new ArrayList<>(client.getRedirectUris()));
-                registration.put("scopes", new ArrayList<>(client.getScopes()));
-
-                Map<String, Object> clientEntry = new LinkedHashMap<>();
-                clientEntry.put("registration", registration);
-                clientsMap.put(client.getClientId(), clientEntry);
-            }
-
-            Map<String, Object> authserverMap = new LinkedHashMap<>();
-            authserverMap.put("client", clientsMap);
-            Map<String, Object> oauth2Map = new LinkedHashMap<>();
-            oauth2Map.put("authorizationserver", authserverMap);
-            Map<String, Object> secMap = new LinkedHashMap<>();
-            secMap.put("oauth2", oauth2Map);
-            Map<String, Object> springMap = new LinkedHashMap<>();
-            springMap.put("security", secMap);
-            root.put("spring", springMap);
-        }
+        String yamlContent = generateYamlContent();
 
         File tempDir = Files.createTempDirectory("oauth2-config-").toFile();
         File configFile = new File(tempDir, "application.yaml");
-        new ObjectMapper(new YAMLFactory()).writeValue(configFile, root);
+        Files.writeString(configFile.toPath(), yamlContent);
 
         withCopyFileToContainer(
             MountableFile.forHostPath(configFile.getAbsolutePath()),
@@ -151,5 +104,59 @@ public class OAuth2Container extends GenericContainer<OAuth2Container> {
                 // Ignore cleanup errors
             }
         }));
+    }
+
+    private String generateYamlContent() {
+        StringBuilder yaml = new StringBuilder();
+
+        // Users section
+        if (!users.isEmpty()) {
+            yaml.append("app:\n");
+            yaml.append("  security:\n");
+            yaml.append("    users:\n");
+            for (User user : users) {
+                yaml.append("      - username: ").append(user.getUsername()).append("\n");
+                yaml.append("        password: ").append(user.getPassword()).append("\n");
+                yaml.append("        roles:\n");
+                for (String role : user.getRoles()) {
+                    yaml.append("          - ").append(role).append("\n");
+                }
+            }
+        }
+
+        // Clients section
+        if (!clients.isEmpty()) {
+            yaml.append("spring:\n");
+            yaml.append("  security:\n");
+            yaml.append("    oauth2:\n");
+            yaml.append("      authorizationserver:\n");
+            yaml.append("        client:\n");
+
+            for (Client client : clients) {
+                yaml.append("          ").append(client.getClientId()).append(":\n");
+                yaml.append("            registration:\n");
+                yaml.append("              client-id: ").append(client.getClientId()).append("\n");
+                yaml.append("              client-secret: ").append(client.getClientSecret()).append("\n");
+                yaml.append("              client-authentication-methods:\n");
+                yaml.append("                - client_secret_basic\n");
+
+                yaml.append("              authorization-grant-types:\n");
+                for (String grantType : client.getGrantTypes()) {
+                    yaml.append("                - ").append(grantType).append("\n");
+                }
+
+                yaml.append("              redirect-uris:\n");
+                for (String uri : client.getRedirectUris()) {
+                    yaml.append("                - ").append(uri).append("\n");
+                }
+
+                yaml.append("              scopes:\n");
+                for (String scope : client.getScopes()) {
+                    yaml.append("                - ").append(scope).append("\n");
+                }
+            }
+        }
+
+        return yaml.toString();
     }
 }
