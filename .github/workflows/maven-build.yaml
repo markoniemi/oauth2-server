@@ -60,8 +60,10 @@ jobs:
         if: success()
         run: |
           gh api repos/markoniemi/dynamic-form/dispatches \
-            -F event_type="oauth2-server-built" \
-            -F client_payload='{"ref":"${{ github.ref }}"}'
+            -f event_type=oauth2-server-built \
+            --input - <<'EOF'
+          {"client_payload": {}}
+          EOF
         env:
           GH_TOKEN: ${{ secrets.GH_PAT }}
 
