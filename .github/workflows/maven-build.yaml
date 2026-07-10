@@ -56,3 +56,12 @@ jobs:
           MAVEN_USERNAME: ${{ secrets.REPSY_USER }}
           MAVEN_PASSWORD: ${{ secrets.REPSY_TOKEN }}
 
+      - name: Trigger dynamic-form build
+        if: success()
+        run: |
+          gh api repos/markoniemi/dynamic-form/dispatches \
+            -f event_type=oauth2-server-built \
+            -f client_payload='{"ref":"${{ github.ref }}"}'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
