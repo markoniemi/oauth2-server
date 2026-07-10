@@ -63,5 +63,5 @@ jobs:
             -f event_type=oauth2-server-built \
             -f client_payload='{"ref":"${{ github.ref }}"}'
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_PAT }}
 
