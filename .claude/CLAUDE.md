@@ -9,6 +9,16 @@ This document provides development guidelines for this OAuth2 Authorization Serv
 - **Tech details**: [docs/TechSpec.md](../docs/TechSpec.md) — Auth server architecture and configuration
 - **Code standards**: [.github/copilot-instructions.md](../.github/copilot-instructions.md) — Coding conventions and development standards
 
+## Integration with Dynamic-Form Project
+
+This OAuth2 Authorization Server is used as the authentication provider for the [dynamic-form](../../../dynamic-form) project. **Any changes to this project must be tested with the dynamic-form application** to ensure compatibility, especially when modifying:
+- Token generation and JWT claims
+- OIDC discovery endpoints
+- Client authentication flows
+- User/role management
+
+Always validate changes in the dynamic-form test suite or local environment before committing.
+
 ## Architecture Overview
 
 ### OAuth2 Authorization Server
