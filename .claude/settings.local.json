@@ -15,7 +15,8 @@
       "Bash(Get-ChildItem -Recurse -Filter \"*oauth*\" -ErrorAction SilentlyContinue)",
       "Bash(Select-Object FullName)",
       "Bash(gh api *)",
-      "WebFetch(domain:raw.githubusercontent.com)"
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(gh run *)"
     ]
   }
 }
