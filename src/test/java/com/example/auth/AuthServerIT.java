@@ -74,7 +74,7 @@ public class AuthServerIT {
                 .queryParam("code_challenge", codeChallenge)
                 .queryParam("code_challenge_method", "S256"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("http://localhost/login"));
+                .andExpect(redirectedUrl("/login"));
     }
 
     @Test

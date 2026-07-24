@@ -43,6 +43,7 @@ public class SecurityConfig {
   public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http)
       throws Exception {
     http.securityMatcher("/oauth2/**", "/.well-known/**");
+    http.authorizeHttpRequests(authorize -> authorize.anyRequest().authenticated());
     http.oauth2AuthorizationServer((authorizationServer) ->
         authorizationServer.oidc(Customizer.withDefaults())
     );
