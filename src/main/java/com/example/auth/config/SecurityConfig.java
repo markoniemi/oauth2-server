@@ -46,6 +46,10 @@ public class SecurityConfig {
     http.oauth2AuthorizationServer((authorizationServer) ->
         authorizationServer.oidc(Customizer.withDefaults())
     );
+    http.authorizeHttpRequests(authorize -> authorize
+        .requestMatchers("/.well-known/**").permitAll()
+        .anyRequest().authenticated()
+    );
     http.cors(Customizer.withDefaults())
         // Redirect to the login page when not authenticated from the
         // authorization endpoint
