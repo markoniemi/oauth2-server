@@ -145,7 +145,7 @@
                     <execution>
                         <phase>pre-integration-test</phase>
                         <goals>
-                            <goal>build</goal>
+                            <goal>dockerBuild</goal>
                         </goals>
                     </execution>
                 </executions>
