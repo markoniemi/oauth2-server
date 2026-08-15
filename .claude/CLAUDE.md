@@ -22,7 +22,7 @@ Always validate changes in the dynamic-form test suite or local environment befo
 ## Architecture Overview
 
 ### OAuth2 Authorization Server
-A Spring Boot 4.0.3 OAuth2 Authorization Server with:
+A Spring Boot 3.5.6 OAuth2 Authorization Server with:
 - **OAuth2 Authorization Code flow** with PKCE support
 - **OpenID Connect** discovery endpoint
 - **JWT token** generation
