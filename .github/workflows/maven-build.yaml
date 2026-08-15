@@ -50,16 +50,11 @@ jobs:
           </settings>
           EOF
 
-      - name: Build and test with Maven
-        run: mvn -B install -DskipTests=false -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn
+      - name: Build with Maven
+        run: mvn -B install deploy -Djib.to.auth.username=${{ github.actor }} -Djib.to.auth.password=${{ secrets.PACKAGE_UPDATE_TOKEN }} -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn
         env:
           MAVEN_USERNAME: ${{ secrets.REPSY_USER }}
           MAVEN_PASSWORD: ${{ secrets.REPSY_TOKEN }}
-
-      - name: Build Docker image with Jib
-        if: success()
-        run: mvn -B jib:build -Djib.to.auth.username=${{ github.actor }} -Djib.to.auth.password=${{ secrets.PACKAGE_UPDATE_TOKEN }}
-        continue-on-error: true
 
       - name: Trigger dynamic-form build
         if: success()
