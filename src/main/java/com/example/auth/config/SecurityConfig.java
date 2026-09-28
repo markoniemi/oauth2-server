@@ -47,14 +47,14 @@ public class SecurityConfig {
       AuthorizationServerSettings authorizationServerSettings,
       JWKSource<SecurityContext> jwkSource)
       throws Exception {
-    http.oauth2AuthorizationServer((authorizationServer) ->
-        authorizationServer
-            .registeredClientRepository(registeredClientRepository)
-            .authorizationServerSettings(authorizationServerSettings)
-            .oidc(Customizer.withDefaults())
-    );
-
-    http.cors(Customizer.withDefaults())
+    http.securityMatcher("/oauth2/**", "/.well-known/**")
+        .oauth2AuthorizationServer((authorizationServer) ->
+            authorizationServer
+                .registeredClientRepository(registeredClientRepository)
+                .authorizationServerSettings(authorizationServerSettings)
+                .oidc(Customizer.withDefaults())
+        )
+        .cors(Customizer.withDefaults())
         // Redirect to the login page when not authenticated from the authorization endpoint
         .exceptionHandling(
             (exceptions) ->
