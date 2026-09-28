@@ -19,6 +19,20 @@ This OAuth2 Authorization Server is used as the authentication provider for the 
 
 Always validate changes in the dynamic-form test suite or local environment before committing.
 
+## IntelliJ MCP Tool Preferences
+
+When working with this project, prefer IntelliJ IDE MCP tools (`mcp__idea__*`) over generic alternatives:
+
+- **File operations**: Use `mcp__idea__read_file`, `mcp__idea__create_new_file` instead of Bash/generic Read/Write
+- **Project navigation**: Use `mcp__idea__search_symbol`, `mcp__idea__search_text`, `mcp__idea__list_directory_tree` for code exploration
+- **Building/testing**: Use `mcp__idea__build_project`, `mcp__idea__execute_run_configuration` instead of manual npm/gradle commands
+- **Refactoring**: Use `mcp__idea__rename_refactoring` for safe renames across the project
+- **Git operations**: Use `mcp__idea__git_status` to check repo state
+- **Linting/diagnostics**: Use `mcp__idea__get_file_problems`, `mcp__idea__lint_files` for code quality checks
+- **Debugging**: Use `mcp__idea__xdebug_*` tools for stepping through code when needed
+
+IntelliJ MCP tools are aware of the project structure, dependencies, and IDE state, making them more reliable than shell-based alternatives.
+
 ## Architecture Overview
 
 ### OAuth2 Authorization Server
