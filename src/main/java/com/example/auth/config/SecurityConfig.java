@@ -8,6 +8,8 @@ import java.util.stream.Collectors;
 
 import com.example.auth.testcontainers.Client;
 import com.example.auth.testcontainers.ClientConfig;
+import com.nimbusds.jose.jwk.source.JWKSource;
+import com.nimbusds.jose.proc.SecurityContext;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
@@ -20,10 +22,10 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
-import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
+import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
@@ -40,13 +42,20 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class SecurityConfig {
   @Bean
   @Order(1)
-  public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http)
+  public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http,
+      RegisteredClientRepository registeredClientRepository,
+      AuthorizationServerSettings authorizationServerSettings,
+      JWKSource<SecurityContext> jwkSource)
       throws Exception {
-    OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
-    http.getConfigurer(OAuth2AuthorizationServerConfigurer.class).oidc(Customizer.withDefaults());
+    http.oauth2AuthorizationServer((authorizationServer) ->
+        authorizationServer
+            .registeredClientRepository(registeredClientRepository)
+            .authorizationServerSettings(authorizationServerSettings)
+            .oidc(Customizer.withDefaults())
+    );
+
     http.cors(Customizer.withDefaults())
-        // Redirect to the login page when not authenticated from the
-        // authorization endpoint
+        // Redirect to the login page when not authenticated from the authorization endpoint
         .exceptionHandling(
             (exceptions) ->
                 exceptions.defaultAuthenticationEntryPointFor(
