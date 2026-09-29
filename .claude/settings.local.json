@@ -15,7 +15,13 @@
       "Bash(Get-ChildItem -Recurse -Filter \"*oauth*\" -ErrorAction SilentlyContinue)",
       "Bash(Select-Object FullName)",
       "Bash(gh api *)",
-      "WebFetch(domain:raw.githubusercontent.com)"
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(curl -s http://localhost:9000/actuator/health)",
+      "Bash(curl -s -X POST http://localhost:9000/oauth2/token -u frontend-client: -d grant_type=client_credentials -d scope=openid)",
+      "Bash(curl *)",
+      "Bash(docker stop *)",
+      "Bash(docker rm *)",
+      "Bash(docker run *)"
     ]
   }
 }

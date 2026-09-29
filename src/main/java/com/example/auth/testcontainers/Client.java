@@ -16,12 +16,13 @@ public class Client {
     @NotBlank(message = "Client ID cannot be blank")
     private final String clientId;
 
-    @NotBlank(message = "Client secret cannot be blank")
     private final String clientSecret;
 
     private Set<String> redirectUris = new HashSet<>();
     private Set<String> scopes = new HashSet<>();
     private Set<String> grantTypes = new HashSet<>(Set.of("authorization_code", "refresh_token"));
+    private String tokenEndpointAuthMethod = "client_secret_basic";
+    private boolean requireProofKey = false;
 
     public Client withRedirectUris(String... uris) {
         this.redirectUris=new HashSet<>(Arrays.asList(uris));
@@ -35,6 +36,16 @@ public class Client {
 
     public Client withGrantTypes(String... types) {
         this.grantTypes=new HashSet<>(Arrays.asList(types));
+        return this;
+    }
+
+    public Client withTokenEndpointAuthMethod(String method) {
+        this.tokenEndpointAuthMethod = method;
+        return this;
+    }
+
+    public Client withRequireProofKey(boolean requireProofKey) {
+        this.requireProofKey = requireProofKey;
         return this;
     }
 }

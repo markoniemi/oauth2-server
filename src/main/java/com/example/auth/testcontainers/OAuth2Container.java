@@ -113,11 +113,19 @@ public class OAuth2Container extends GenericContainer<OAuth2Container> {
             for (Client client : clients) {
                 Map<String, Object> registration = new LinkedHashMap<>();
                 registration.put("client-id", client.getClientId());
-                registration.put("client-secret", client.getClientSecret());
-                registration.put("client-authentication-methods", List.of("client_secret_basic"));
+                if (client.getClientSecret() != null && !client.getClientSecret().isEmpty()) {
+                    registration.put("client-secret", client.getClientSecret());
+                }
+                registration.put("client-authentication-methods", List.of(client.getTokenEndpointAuthMethod()));
                 registration.put("authorization-grant-types", new ArrayList<>(client.getGrantTypes()));
                 registration.put("redirect-uris", new ArrayList<>(client.getRedirectUris()));
                 registration.put("scopes", new ArrayList<>(client.getScopes()));
+
+                if (client.isRequireProofKey()) {
+                    Map<String, Object> clientSettings = new LinkedHashMap<>();
+                    clientSettings.put("require-proof-key", true);
+                    registration.put("client-settings", clientSettings);
+                }
 
                 Map<String, Object> clientEntry = new LinkedHashMap<>();
                 clientEntry.put("registration", registration);

@@ -40,10 +40,8 @@ public class ClientConfig {
             log.debug("Clients ({}): {}", clients.size(), clients);
             return createFromTestContainersClients(clients);
         }
-        // Fallback: provide native config client from test resources
         RegisteredClient nativeClient = RegisteredClient.withId(UUID.randomUUID().toString())
             .clientId("frontend-client")
-            .clientSecret(null)
             .clientAuthenticationMethod(ClientAuthenticationMethod.NONE)
             .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
             .redirectUri("http://localhost:8080")
@@ -67,9 +65,18 @@ public class ClientConfig {
         List<RegisteredClient> registeredClients = new ArrayList<>();
         for (Client client : clientList) {
             RegisteredClient.Builder builder = RegisteredClient.withId(UUID.randomUUID().toString())
-                .clientId(client.getClientId())
-                .clientSecret(client.getClientSecret())
-                .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC);
+                .clientId(client.getClientId());
+
+            boolean isPublicClient = client.getClientSecret() == null || client.getClientSecret().isEmpty();
+            if (!isPublicClient) {
+                builder.clientSecret(client.getClientSecret());
+            }
+
+            String authMethod = client.getTokenEndpointAuthMethod();
+            if (isPublicClient && "client_secret_basic".equals(authMethod)) {
+                authMethod = "none";
+            }
+            setClientAuthenticationMethod(builder, authMethod);
 
             for (String uri : client.getRedirectUris()) {
                 builder.redirectUri(uri);
@@ -86,8 +93,23 @@ public class ClientConfig {
                     builder.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS);
                 }
             }
+
+            if (client.isRequireProofKey() || isPublicClient) {
+                builder.clientSettings(ClientSettings.builder().requireProofKey(true).build());
+            }
+
             registeredClients.add(builder.build());
         }
         return new InMemoryRegisteredClientRepository(registeredClients);
+    }
+
+    private void setClientAuthenticationMethod(RegisteredClient.Builder builder, String authMethod) {
+        if ("none".equals(authMethod)) {
+            builder.clientAuthenticationMethod(ClientAuthenticationMethod.NONE);
+        } else if ("client_secret_post".equals(authMethod)) {
+            builder.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_POST);
+        } else {
+            builder.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC);
+        }
     }
 }
