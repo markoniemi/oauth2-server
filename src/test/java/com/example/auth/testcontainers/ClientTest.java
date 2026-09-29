@@ -24,13 +24,11 @@ public class ClientTest {
     }
 
     @Test
-    public void clientSecretCannotBeBlank() {
+    public void publicClientWithEmptySecret() {
         Client client = new Client("my-app", "");
         Set<ConstraintViolation<Client>> violations = validator.validate(client);
 
-        assertFalse(violations.isEmpty());
-        assertTrue(violations.stream()
-            .anyMatch(v -> v.getPropertyPath().toString().equals("clientSecret")));
+        assertTrue(violations.isEmpty(), "Public clients (PKCE) should allow empty secrets");
     }
 
     @Test
