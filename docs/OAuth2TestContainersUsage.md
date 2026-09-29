@@ -5,15 +5,17 @@ OAuth2TestContainers is a reusable library that allows you to spin up an OAuth2 
 ## Overview
 
 This library provides a TestContainers extension that:
-- Manages the lifecycle of an OAuth2 Authorization Server Docker container
+- Manages the lifecycle of an OAuth2 Authorization Server Docker container (Spring Boot 4.0.3, Spring Security 7.0)
 - Configures users and roles for authentication testing
-- Registers OAuth2 clients programmatically
+- Registers OAuth2 clients programmatically (supports public clients and confidential clients)
+- Supports PKCE (Proof Key for Code Exchange) for public clients
+- Supports custom token endpoint auth methods (client_secret_basic, client_secret_post, none)
 - Supports custom issuer URLs and context paths
 - Provides fluent builder API for easy setup
 
 ## Dependencies
 
-Add to your `pom.xml`:
+TestContainers integration is included with the OAuth2 Authorization Server library. Downstream projects should add:
 
 ```xml
 <dependency>
@@ -30,6 +32,8 @@ Add to your `pom.xml`:
     <scope>test</scope>
 </dependency>
 ```
+
+**Note:** OAuth2 Authorization Server upgraded to Spring Boot 4.0.3 and Spring Security 7.0. All clients must support PKCE for public client flows.
 
 ## Basic Usage
 
@@ -54,12 +58,41 @@ static void tearDown() {
 
 ### Registering OAuth2 Clients
 
+**Confidential Client (with secret):**
+
 ```java
 container = new Container()
     .withOAuth2Client(
         new Client("client-id", "client-secret")
-            .withRedirectUri("http://localhost:8080/callback")
+            .withRedirectUris("http://localhost:8080/callback")
             .withScopes("openid", "profile", "email")
+    );
+container.start();
+```
+
+**Public Client (PKCE, no secret):**
+
+```java
+container = new Container()
+    .withOAuth2Client(
+        new Client("frontend-client", "")  // Empty secret for public client
+            .withRedirectUris("http://localhost:8080", "http://localhost:5173")
+            .withScopes("openid", "profile", "email")
+            .withRequireProofKey(true)  // Enable PKCE
+            // Auth method "none" is auto-set for public clients
+    );
+container.start();
+```
+
+**Custom Token Endpoint Auth Method:**
+
+```java
+container = new Container()
+    .withOAuth2Client(
+        new Client("backend-client", "client-secret")
+            .withRedirectUris("http://localhost:8080/callback")
+            .withScopes("api")
+            .withTokenEndpointAuthMethod("client_secret_post")  // or "client_secret_basic" (default), "none"
     );
 container.start();
 ```
@@ -105,11 +138,18 @@ Represents an OAuth2 client registration.
 new Client(String clientId, String clientSecret)
 ```
 
+**Note:** Pass empty string `""` for public clients (PKCE flow).
+
 **Methods:**
 
-- `withRedirectUri(String uri)` - Add a redirect URI
+- `withRedirectUris(String... uris)` - Add redirect URIs (supports multiple)
 - `withScopes(String... scopes)` - Add allowed scopes
-- `withGrantTypes(String... grantTypes)` - Set allowed grant types
+- `withGrantTypes(String... grantTypes)` - Set allowed grant types (default: authorization_code, refresh_token)
+- `withTokenEndpointAuthMethod(String method)` - Set token endpoint auth method:
+  - `"client_secret_basic"` (default for clients with secrets)
+  - `"client_secret_post"` 
+  - `"none"` (default for public clients)
+- `withRequireProofKey(boolean)` - Enable PKCE requirement (recommended for public clients)
 
 ### User
 
@@ -131,9 +171,17 @@ public class OAuth2AuthenticationIT {
             .withUser("user", "password", "USER")
             .withUser("admin", "password", "ADMIN")
             .withOAuth2Client(
-                new Client("test-app", "test-secret")
-                    .withRedirectUri("http://localhost:8080/callback")
+                // Confidential client for backend services
+                new Client("backend-service", "backend-secret")
+                    .withRedirectUris("http://localhost:8080/callback")
+                    .withScopes("api", "user:read")
+            )
+            .withOAuth2Client(
+                // Public client for frontend (PKCE required)
+                new Client("frontend-app", "")
+                    .withRedirectUris("http://localhost:5173", "http://localhost:8080")
                     .withScopes("openid", "profile", "email")
+                    .withRequireProofKey(true)
             );
         container.start();
     }
@@ -172,16 +220,60 @@ public class OAuth2AuthenticationIT {
         WebClient webClient = new WebClient();
         String authUrl = container.getAuthServerUrl() + "/oauth2/authorize?" +
             "response_type=code&" +
-            "client_id=test-app&" +
-            "redirect_uri=http://localhost:8080/callback&" +
-            "scope=openid";
+            "client_id=frontend-app&" +
+            "redirect_uri=http://localhost:5173&" +
+            "scope=openid&" +
+            "code_challenge=E9Mrozoa2owUednRPg8w_-dvznju3T92jVWswbCQQWE&" +
+            "code_challenge_method=S256";
         
         var page = webClient.getPage(authUrl);
         
         assertTrue(page.getUrl().toString().contains("/login"));
     }
+
+    @Test
+    void testTokenExchangeWithClientSecret() throws Exception {
+        // Confidential client can authenticate with secret
+        var response = restClient.post()
+            .uri(container.getAuthServerUrl() + "/oauth2/token")
+            .header("Authorization", "Basic " + Base64.getEncoder()
+                .encodeToString("backend-service:backend-secret".getBytes()))
+            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+            .bodyValue("grant_type=client_credentials&scope=api")
+            .retrieve()
+            .toEntity(String.class);
+        
+        assertEquals(200, response.getStatusCode().value());
+    }
 }
 ```
+
+## Migration from Spring Boot 3.x
+
+**Breaking Changes in Spring Boot 4.0.3 / Spring Security 7.0:**
+
+1. **Public clients now require explicit PKCE configuration:**
+   ```java
+   // Old way (Spring Boot 3.x)
+   new Client("frontend-client", null)  // Null secret
+
+   // New way (Spring Boot 4.0.3)
+   new Client("frontend-client", "")    // Empty string secret
+       .withRequireProofKey(true)        // Explicitly enable PKCE
+   ```
+
+2. **Token endpoint auth methods are now explicit:**
+   ```java
+   // Default for confidential clients: "client_secret_basic"
+   new Client("backend", "secret")
+
+   // If you need POST method:
+   new Client("backend", "secret")
+       .withTokenEndpointAuthMethod("client_secret_post")
+
+   // For public clients: auto-set to "none" when secret is empty
+   new Client("frontend", "")  // Auth method automatically "none"
+   ```
 
 ## Troubleshooting
 
@@ -189,9 +281,23 @@ public class OAuth2AuthenticationIT {
 
 Ensure Docker is running and accessible. TestContainers will automatically detect your Docker environment (Npipe on Windows, Unix socket on Linux/macOS).
 
+Verify OAuth2 server image exists: `docker images | grep oauth2-server`
+
 ### Ports in use
 
 TestContainers automatically selects available ports. If you get port errors, ensure you're not hardcoding ports in your tests - use `container.getAuthServerUrl()` instead.
+
+### PKCE validation failures
+
+If you see "code_challenge" parameter errors, ensure public clients have:
+```java
+.withRequireProofKey(true)  // Enable PKCE requirement
+```
+
+And test code includes PKCE parameters:
+```java
+"code_challenge=" + codeChallenge + "&code_challenge_method=S256"
+```
 
 ### Slow test execution
 
@@ -231,6 +337,13 @@ class MyApplicationIT {
     }
 }
 ```
+
+## Version Compatibility
+
+| OAuth2 Server Version | Spring Boot | Spring Security | Status |
+|---|---|---|---|
+| 4.0.3+ | 4.0.3 | 7.0+ | Current |
+| 0.1-SNAPSHOT | 3.5.6 | 6.x | Deprecated |
 
 ## License
 
