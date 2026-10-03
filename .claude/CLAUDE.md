@@ -55,11 +55,9 @@ Reusable library for testing downstream applications:
 
 **OAuth2Container** — Main entry point. Extends `GenericContainer<OAuth2Container>` to manage the Docker container lifecycle and configuration.
 
-**Client & User** — Lombok data classes (`Client` mutable `@Data`, `User` immutable `@Value`) representing registered clients and authentication users with validation.
+**Client & User** — `Client` is a fluent builder class (`with*` methods), `User` is a record; both validate in their constructors (`IllegalArgumentException`).
 
-**ServerConfig** — Configuration aggregator supporting both fluent builder and YAML file-based setup.
-
-**ClientConfig** — Spring configuration class that registers clients into the authorization server's repository (to be replaced by Boot property-based registration, see [SimplificationPlan.md](../docs/SimplificationPlan.md)).
+**Server configuration** — Spring Boot auto-configuration registers clients from `spring.security.oauth2.authorizationserver.client.*`; `SecurityConfig` adds filter chains, users (`app.security.users`) and CORS (`app.cors.allowed-origins`).
 
 For detailed information about coding conventions and development practices, refer to the [Copilot Instructions](../.github/copilot-instructions.md).
 

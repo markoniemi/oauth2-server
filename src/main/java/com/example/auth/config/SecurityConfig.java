@@ -1,7 +1,6 @@
 package com.example.auth.config;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
@@ -14,13 +13,13 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.factory.PasswordEncoderFactories;
+import org.springframework.security.crypto.password.DelegatingPasswordEncoder;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
-import org.springframework.security.web.firewall.HttpFirewall;
-import org.springframework.security.web.firewall.StrictHttpFirewall;
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -66,31 +65,29 @@ public class SecurityConfig {
   }
 
   @Bean
-  public UserDetailsService userDetailsService(SecurityProperties securityProperties,
-      PasswordEncoder passwordEncoder) {
-    List<UserDetails> users = securityProperties.getUsers().stream()
-        .map(u -> User.builder()
-            .username(u.getUsername())
-            .password(passwordEncoder.encode(u.getPassword()))
-            .roles(u.getRoles().toArray(new String[0]))
+  public UserDetailsService userDetailsService(SecurityProperties securityProperties) {
+    List<UserDetails> users = securityProperties.users().stream()
+        .map(u -> User.withUsername(u.username())
+            .password(u.password())
+            .roles(u.roles().toArray(new String[0]))
             .build())
-        .collect(Collectors.toList());
+        .toList();
 
-    log.debug("Users ({}): {}", securityProperties.getUsers().size(), securityProperties.getUsers());
+    log.debug("Users ({}): {}", users.size(), securityProperties.users());
 
     return new InMemoryUserDetailsManager(users);
   }
 
+  /**
+   * Checks user passwords and client secrets. Values may be encoded with an id prefix such as
+   * {@code {bcrypt}...}; values without a prefix are compared as plain text.
+   */
   @Bean
   public PasswordEncoder passwordEncoder() {
-    return NoOpPasswordEncoder.getInstance();
-  }
-
-  @Bean
-  public HttpFirewall httpFirewall() {
-    StrictHttpFirewall firewall = new StrictHttpFirewall();
-    firewall.setAllowSemicolon(true);
-    return firewall;
+    DelegatingPasswordEncoder encoder =
+        (DelegatingPasswordEncoder) PasswordEncoderFactories.createDelegatingPasswordEncoder();
+    encoder.setDefaultPasswordEncoderForMatches(NoOpPasswordEncoder.getInstance());
+    return encoder;
   }
 
   @Bean

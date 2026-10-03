@@ -230,14 +230,14 @@ Restore `ClientConfig.java` from git; dynamic-form Phase 1 changes are harmless 
 **Goal:** Remove remaining hard-coding and fix code-standard issues. No API change for consumers.
 
 ### Tasks
-- [ ] Password encoder: `PasswordEncoderFactories.createDelegatingPasswordEncoder()`; allow `{noop}`/`{bcrypt}` prefixes in YAML (keep plain passwords working by encoding at startup).
-- [ ] Stop logging user objects including passwords (`SecurityConfig.java:95`); log usernames only.
-- [ ] `StrictHttpFirewall.setAllowSemicolon(true)`: document why or remove.
-- [ ] `SecurityProperties` → record with `@ConfigurationProperties`; drop redundant `@Configuration`.
-- [ ] `Client`/`User`/`ServerConfig`: make consistent (records or immutable builders). Real validation in constructors — `@Validated`/`@NotBlank` do nothing on plain objects.
-- [ ] Logging: move `org.springframework.security` DEBUG out of `logback-spring.xml` default; use `logging.level.*` properties so it's switchable via env.
-- [ ] Unify indentation (one style across `config/` and `testcontainers/`).
-- [ ] Update `.claude/CLAUDE.md` statements that no longer match the code (records, class names).
+- [x] Password encoder: delegating encoder with no-op fallback for unprefixed values — `{bcrypt}`/`{noop}` work, plain user passwords **and plain client secrets** keep working (a plain delegating encoder broke client-secret ITs).
+- [x] Stop logging user objects including passwords (`SecurityConfig.java:95`); log usernames only.
+- [x] `StrictHttpFirewall.setAllowSemicolon(true)`: removed. Added for `;jsessionid` URL rewriting (056c15b); fixed at the root with `server.servlet.session.tracking-modes: cookie`.
+- [x] `SecurityProperties` → record with `@ConfigurationProperties`; drop redundant `@Configuration`.
+- [x] `Client`/`User`/`ServerConfig`: `User` → record, `Client` keeps fluent API with `@Getter` (setters dropped, secret hidden in `toString`); both validate in constructors. `ServerConfig` deleted (unused by any code path). Was: make consistent (records or immutable builders). Real validation in constructors — `@Validated`/`@NotBlank` do nothing on plain objects.
+- [x] Logging: move `org.springframework.security` DEBUG out of `logback-spring.xml` default; use `logging.level.*` properties so it's switchable via env.
+- [x] Unify indentation (2-space, Google Java Style, matching `config/` and dynamic-form) (one style across `config/` and `testcontainers/`).
+- [x] Update `.claude/CLAUDE.md` statements that no longer match the code (records, class names).
 
 ### Validation
 - Standard procedure. Login with existing plain-text YAML passwords must still work.
@@ -286,7 +286,7 @@ Restore `ClientConfig.java` from git; dynamic-form Phase 1 changes are harmless 
 | 0 | dfbdc7a, 8ad78d8 (CI fix) | — | green: oauth2-server 25 unit + 19 IT; dynamic-form backend 17 + 3 IT, frontend 47 | red → fixed by 8ad78d8; green / green | 2026-10-03 |
 | 1 | 8c61b3e | b7393e9 | green: oauth2-server 30 unit + 19 IT; dynamic-form backend 17 + 3 IT, frontend 47 | green / green | 2026-10-03 |
 | 2 | 6d1c3c2 | — | green: oauth2-server 32 unit + 19 IT; dynamic-form backend 17 + 3 IT (FrontendIT login/logout), frontend 47; smoke: default client → login, CORS 5173 allowed / other 403 | green / green | 2026-10-03 |
-| 3 | (this commit) | — | green: oauth2-server 34 unit + 21 IT; dynamic-form backend 17 + 3 IT, frontend 47; smoke: issuer follows request host, JWKS served | pending | 2026-10-03 |
-| 4 | |  | | | |
+| 3 | bd455be | — | green: oauth2-server 34 unit + 21 IT; dynamic-form backend 17 + 3 IT, frontend 47; smoke: issuer follows request host, JWKS served | green / green | 2026-10-03 |
+| 4 | (this commit) | — | green: oauth2-server 35 unit + 21 IT; dynamic-form backend 17 + 3 IT, frontend 47 | pending | 2026-10-03 |
 | 5 | |  | | | |
 | 6 | |  | | | |

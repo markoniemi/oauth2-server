@@ -12,20 +12,29 @@ mvn spring-boot:run
 
 Server runs on `http://localhost:9000`
 
-**Default credentials:**
-- Username: `user`
-- Password: `user`
+No users are configured by default. Add them in `config/application.yaml` (or any Spring property source):
+
+```yaml
+app:
+  security:
+    users:
+      - username: admin
+        password: admin              # plain text, or encoded e.g. "{bcrypt}$2a$10$..."
+        roles: [USER, ADMIN]
+```
+
+A public `frontend-client` (PKCE, redirect URIs `http://localhost:8080` and `http://localhost:5173`) is registered by default; more clients go under `spring.security.oauth2.authorizationserver.client.*`.
 
 ### Use in Tests
 
 ```java
 @BeforeAll
 static void setUp() {
-    container = new Container()
+    container = new OAuth2Container()
         .withUser("testuser", "testpass", "USER")
         .withOAuth2Client(
             new Client("client-id", "client-secret")
-                .withRedirectUri("http://localhost:8080/callback")
+                .withRedirectUris("http://localhost:8080/callback")
                 .withScopes("openid", "profile")
         );
     container.start();
@@ -68,8 +77,7 @@ src/
 │   │   └── testcontainers/
 │   │       ├── OAuth2Container.java
 │   │       ├── Client.java
-│   │       ├── User.java
-│   │       └── ServerConfig.java
+│   │       └── User.java
 │   └── resources/
 │       └── application.yaml
 └── test/

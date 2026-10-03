@@ -19,123 +19,123 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class ConfigFileAuthFlowIT {
 
-    private static OAuth2Container container;
-    private WebClient webClient;
+  private static OAuth2Container container;
+  private WebClient webClient;
 
-    @BeforeAll
-    static void setUp() {
-        container = new OAuth2Container()
-            .withConfigFile("test-config.yaml");
-        container.start();
+  @BeforeAll
+  static void setUp() {
+    container = new OAuth2Container()
+        .withConfigFile("test-config.yaml");
+    container.start();
+  }
+
+  @AfterAll
+  static void tearDown() {
+    if (container != null) {
+      container.stop();
     }
+  }
 
-    @AfterAll
-    static void tearDown() {
-        if (container != null) {
-            container.stop();
-        }
-    }
+  @BeforeEach
+  void setUpBeforeEach() {
+    webClient = new WebClient();
+    webClient.getOptions().setThrowExceptionOnFailingStatusCode(false);
+    webClient.getOptions().setRedirectEnabled(true);
+    webClient.getCookieManager().clearCookies();
+  }
 
-    @BeforeEach
-    void setUpBeforeEach() {
-        webClient = new WebClient();
-        webClient.getOptions().setThrowExceptionOnFailingStatusCode(false);
-        webClient.getOptions().setRedirectEnabled(true);
-        webClient.getCookieManager().clearCookies();
-    }
+  @Test
+  public void configFileAdminUserCanAuthenticate() throws Exception {
+    String baseUrl = container.getAuthServerUrl();
+    String authorizationUrl = baseUrl + "/oauth2/authorize?" +
+      "response_type=code&" +
+      "client_id=config-client&" +
+      "scope=openid%20profile&" +
+      "redirect_uri=http://localhost:3000/callback&" +
+      "state=test-state&" +
+      "code_challenge=" + generateCodeChallenge("test-verifier") + "&" +
+      "code_challenge_method=S256";
 
-    @Test
-    public void configFileAdminUserCanAuthenticate() throws Exception {
-        String baseUrl = container.getAuthServerUrl();
-        String authorizationUrl = baseUrl + "/oauth2/authorize?" +
-            "response_type=code&" +
-            "client_id=config-client&" +
-            "scope=openid%20profile&" +
-            "redirect_uri=http://localhost:3000/callback&" +
-            "state=test-state&" +
-            "code_challenge=" + generateCodeChallenge("test-verifier") + "&" +
-            "code_challenge_method=S256";
+    // Navigate to authorization endpoint
+    HtmlPage loginPage = webClient.getPage(authorizationUrl);
 
-        // Navigate to authorization endpoint
-        HtmlPage loginPage = webClient.getPage(authorizationUrl);
+    // Verify we're on login page
+    assertTrue(loginPage.getUrl().toString().contains("/login"));
 
-        // Verify we're on login page
-        assertTrue(loginPage.getUrl().toString().contains("/login"));
+    // Log in with config-admin user from test-config.yaml
+    HtmlInput usernameInput = loginPage.querySelector("input[name='username']");
+    HtmlInput passwordInput = loginPage.querySelector("input[name='password']");
+    HtmlButton signInButton = loginPage.querySelector("button");
 
-        // Log in with config-admin user from test-config.yaml
-        HtmlInput usernameInput = loginPage.querySelector("input[name='username']");
-        HtmlInput passwordInput = loginPage.querySelector("input[name='password']");
-        HtmlButton signInButton = loginPage.querySelector("button");
+    assertNotNull(usernameInput);
+    assertNotNull(passwordInput);
+    assertNotNull(signInButton);
 
-        assertNotNull(usernameInput);
-        assertNotNull(passwordInput);
-        assertNotNull(signInButton);
+    usernameInput.type("config-admin");
+    passwordInput.type("password123");
 
-        usernameInput.type("config-admin");
-        passwordInput.type("password123");
+    // Submit login form
+    webClient.getOptions().setRedirectEnabled(false);
+    var pageAfterLogin = signInButton.click();
+    var responseAfterLogin = pageAfterLogin.getWebResponse();
 
-        // Submit login form
-        webClient.getOptions().setRedirectEnabled(false);
-        var pageAfterLogin = signInButton.click();
-        var responseAfterLogin = pageAfterLogin.getWebResponse();
+    // Should redirect (302) back to authorization endpoint
+    assertEquals(302, responseAfterLogin.getStatusCode());
 
-        // Should redirect (302) back to authorization endpoint
-        assertEquals(302, responseAfterLogin.getStatusCode());
+    // Authorization endpoint issues a code to the registered redirect URI of config-client
+    var authorizationResponse = webClient.getPage(responseAfterLogin.getResponseHeaderValue("Location"))
+        .getWebResponse();
+    assertEquals(302, authorizationResponse.getStatusCode());
+    String callback = authorizationResponse.getResponseHeaderValue("Location");
+    assertTrue(callback.startsWith("http://localhost:3000/callback"), callback);
+    assertTrue(callback.contains("code="), callback);
+  }
 
-        // Authorization endpoint issues a code to the registered redirect URI of config-client
-        var authorizationResponse = webClient.getPage(responseAfterLogin.getResponseHeaderValue("Location"))
-            .getWebResponse();
-        assertEquals(302, authorizationResponse.getStatusCode());
-        String callback = authorizationResponse.getResponseHeaderValue("Location");
-        assertTrue(callback.startsWith("http://localhost:3000/callback"), callback);
-        assertTrue(callback.contains("code="), callback);
-    }
+  @Test
+  public void configFileClientCanRequestToken() throws Exception {
+    String baseUrl = container.getAuthServerUrl();
+    RestClient restClient = RestClient.create();
 
-    @Test
-    public void configFileClientCanRequestToken() throws Exception {
-        String baseUrl = container.getAuthServerUrl();
-        RestClient restClient = RestClient.create();
+    // Request token with config-client credentials from test-config.yaml
+    String credentials = "config-client:client-secret-123";
+    String encodedCredentials = Base64.getEncoder().encodeToString(credentials.getBytes());
 
-        // Request token with config-client credentials from test-config.yaml
-        String credentials = "config-client:client-secret-123";
-        String encodedCredentials = Base64.getEncoder().encodeToString(credentials.getBytes());
+    var tokenResponse = restClient.post()
+        .uri(baseUrl + "/oauth2/token")
+        .header("Authorization", "Basic " + encodedCredentials)
+        .header("Content-Type", "application/x-www-form-urlencoded")
+        .body("grant_type=client_credentials")
+        .retrieve()
+        .toEntity(Map.class);
 
-        var tokenResponse = restClient.post()
-            .uri(baseUrl + "/oauth2/token")
-            .header("Authorization", "Basic " + encodedCredentials)
-            .header("Content-Type", "application/x-www-form-urlencoded")
-            .body("grant_type=client_credentials")
-            .retrieve()
-            .toEntity(Map.class);
+    assertEquals(200, tokenResponse.getStatusCode().value());
+    assertNotNull(tokenResponse.getBody().get("access_token"));
+  }
 
-        assertEquals(200, tokenResponse.getStatusCode().value());
-        assertNotNull(tokenResponse.getBody().get("access_token"));
-    }
+  @Test
+  public void discoveryEndpointWorksWithConfigFile() throws Exception {
+    String baseUrl = container.getAuthServerUrl();
+    RestClient restClient = RestClient.create();
 
-    @Test
-    public void discoveryEndpointWorksWithConfigFile() throws Exception {
-        String baseUrl = container.getAuthServerUrl();
-        RestClient restClient = RestClient.create();
+    var response = restClient.get()
+        .uri(baseUrl + "/.well-known/openid-configuration")
+        .retrieve()
+        .toEntity(String.class);
 
-        var response = restClient.get()
-            .uri(baseUrl + "/.well-known/openid-configuration")
-            .retrieve()
-            .toEntity(String.class);
+    assertEquals(200, response.getStatusCode().value());
 
-        assertEquals(200, response.getStatusCode().value());
+    ObjectMapper mapper = new ObjectMapper();
+    @SuppressWarnings("unchecked")
+    Map<String, Object> discovery = mapper.readValue(response.getBody(), Map.class);
 
-        ObjectMapper mapper = new ObjectMapper();
-        @SuppressWarnings("unchecked")
-        Map<String, Object> discovery = mapper.readValue(response.getBody(), Map.class);
+    assertTrue(discovery.containsKey("issuer"));
+    assertTrue(discovery.containsKey("authorization_endpoint"));
+    assertTrue(discovery.containsKey("token_endpoint"));
+  }
 
-        assertTrue(discovery.containsKey("issuer"));
-        assertTrue(discovery.containsKey("authorization_endpoint"));
-        assertTrue(discovery.containsKey("token_endpoint"));
-    }
-
-    private String generateCodeChallenge(String codeVerifier) throws Exception {
-        MessageDigest digest = MessageDigest.getInstance("SHA-256");
-        byte[] hash = digest.digest(codeVerifier.getBytes());
-        return Base64.getUrlEncoder().withoutPadding().encodeToString(hash);
-    }
+  private String generateCodeChallenge(String codeVerifier) throws Exception {
+    MessageDigest digest = MessageDigest.getInstance("SHA-256");
+    byte[] hash = digest.digest(codeVerifier.getBytes());
+    return Base64.getUrlEncoder().withoutPadding().encodeToString(hash);
+  }
 }

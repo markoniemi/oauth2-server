@@ -1,21 +1,25 @@
 package com.example.auth.testcontainers;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
-import lombok.RequiredArgsConstructor;
-import lombok.Value;
-
 import java.util.Set;
 
-@Value
-@RequiredArgsConstructor
-public class User {
-    @NotBlank(message = "Username cannot be blank")
-    private final String username;
+/** A login user passed to the container as {@code app.security.users}. */
+public record User(String username, String password, Set<String> roles) {
 
-    @NotBlank(message = "Password cannot be blank")
-    private final String password;
+  public User {
+    if (username == null || username.isBlank()) {
+      throw new IllegalArgumentException("Username cannot be blank");
+    }
+    if (password == null || password.isBlank()) {
+      throw new IllegalArgumentException("Password cannot be blank");
+    }
+    if (roles == null || roles.isEmpty()) {
+      throw new IllegalArgumentException("Roles cannot be empty");
+    }
+    roles = Set.copyOf(roles);
+  }
 
-    @NotEmpty(message = "Roles cannot be empty")
-    private final Set<String> roles;
+  @Override
+  public String toString() {
+    return "User[username=" + username + ", roles=" + roles + "]";
+  }
 }

@@ -7,82 +7,82 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class ConfigFileTest {
 
-    @Test
-    public void mountConfigFileFromClasspath() {
-        OAuth2Container container = new OAuth2Container()
-            .withConfigFile("test-config.yaml");
+  @Test
+  public void mountConfigFileFromClasspath() {
+    OAuth2Container container = new OAuth2Container()
+        .withConfigFile("test-config.yaml");
 
-        container.start();
-        try {
-            assertTrue(container.isRunning());
-        } finally {
-            container.stop();
-        }
+    container.start();
+    try {
+      assertTrue(container.isRunning());
+    } finally {
+      container.stop();
     }
+  }
 
-    @Test
-    public void configFileNotFound() {
-        OAuth2Container container = new OAuth2Container();
+  @Test
+  public void configFileNotFound() {
+    OAuth2Container container = new OAuth2Container();
 
-        assertThrows(IllegalArgumentException.class, () -> {
-            container.withConfigFile("nonexistent.yaml");
-        });
+    assertThrows(IllegalArgumentException.class, () -> {
+      container.withConfigFile("nonexistent.yaml");
+    });
+  }
+
+  @Test
+  public void configFileMountedToConfigPath() {
+    OAuth2Container container = new OAuth2Container()
+        .withConfigFile("test-config.yaml");
+
+    container.start();
+    try {
+      // Spring Boot loads config from /config/application.yaml
+      assertTrue(container.isRunning());
+      String url = container.getAuthServerUrl();
+      assertNotNull(url);
+    } finally {
+      container.stop();
     }
+  }
 
-    @Test
-    public void configFileMountedToConfigPath() {
-        OAuth2Container container = new OAuth2Container()
-            .withConfigFile("test-config.yaml");
+  @Test
+  public void fluentApiAndConfigFileMixed() {
+    OAuth2Container container = new OAuth2Container()
+        .withConfigFile("test-config.yaml")
+        .withUser("extra-user", "password", "EXTRA_ROLE")
+        .withOAuth2Client(new Client("api-client", "secret")
+          .withScopes("api")
+          .withRedirectUris("http://api.example.com/callback"));
 
-        container.start();
-        try {
-            // Spring Boot loads config from /config/application.yaml
-            assertTrue(container.isRunning());
-            String url = container.getAuthServerUrl();
-            assertNotNull(url);
-        } finally {
-            container.stop();
-        }
+    // getUsers/getClients only reflect fluent API (not mounted config file)
+    assertEquals(1, container.getUsers().size());
+    assertEquals(1, container.getClients().size());
+
+    container.start();
+    try {
+      // Container has both: config file users/clients + fluent API users/clients
+      assertTrue(container.isRunning());
+    } finally {
+      container.stop();
     }
+  }
 
-    @Test
-    public void fluentApiAndConfigFileMixed() {
-        OAuth2Container container = new OAuth2Container()
-            .withConfigFile("test-config.yaml")
-            .withUser("extra-user", "password", "EXTRA_ROLE")
-            .withOAuth2Client(new Client("api-client", "secret")
-                .withScopes("api")
-                .withRedirectUris("http://api.example.com/callback"));
+  @Test
+  public void configFileLoadsUserAndClientConfig() {
+    OAuth2Container container = new OAuth2Container()
+        .withConfigFile("test-config.yaml");
 
-        // getUsers/getClients only reflect fluent API (not mounted config file)
-        assertEquals(1, container.getUsers().size());
-        assertEquals(1, container.getClients().size());
+    container.start();
+    try {
+      // Verify container started successfully, meaning Spring Boot loaded the config
+      assertTrue(container.isRunning());
 
-        container.start();
-        try {
-            // Container has both: config file users/clients + fluent API users/clients
-            assertTrue(container.isRunning());
-        } finally {
-            container.stop();
-        }
+      // Verify the auth server endpoint is accessible
+      String authUrl = container.getAuthServerUrl();
+      assertNotNull(authUrl);
+      assertTrue(authUrl.startsWith("http://localhost:"));
+    } finally {
+      container.stop();
     }
-
-    @Test
-    public void configFileLoadsUserAndClientConfig() {
-        OAuth2Container container = new OAuth2Container()
-            .withConfigFile("test-config.yaml");
-
-        container.start();
-        try {
-            // Verify container started successfully, meaning Spring Boot loaded the config
-            assertTrue(container.isRunning());
-
-            // Verify the auth server endpoint is accessible
-            String authUrl = container.getAuthServerUrl();
-            assertNotNull(authUrl);
-            assertTrue(authUrl.startsWith("http://localhost:"));
-        } finally {
-            container.stop();
-        }
-    }
+  }
 }

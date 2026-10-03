@@ -1,21 +1,29 @@
 package com.example.auth.config;
 
-import lombok.Data;
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.Configuration;
-import java.util.ArrayList;
 import java.util.List;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 
-@Data
-@Configuration
+/** Users that can log in, bound from {@code app.security.users}. */
 @ConfigurationProperties(prefix = "app.security")
-public class SecurityProperties {
-    private List<User> users = new ArrayList<>();
+public record SecurityProperties(List<User> users) {
 
-    @Data
-    public static class User {
-        private String username;
-        private String password;
-        private List<String> roles = new ArrayList<>();
+  public SecurityProperties {
+    users = users == null ? List.of() : List.copyOf(users);
+  }
+
+  /**
+   * A login user. The password is plain text or prefixed with an encoding id, e.g. {@code
+   * {bcrypt}...}.
+   */
+  public record User(String username, String password, List<String> roles) {
+
+    public User {
+      roles = roles == null ? List.of() : List.copyOf(roles);
     }
+
+    @Override
+    public String toString() {
+      return "User[username=" + username + ", roles=" + roles + "]";
+    }
+  }
 }

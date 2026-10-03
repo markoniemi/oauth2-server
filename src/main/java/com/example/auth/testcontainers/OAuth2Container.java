@@ -22,199 +22,199 @@ import org.testcontainers.utility.MountableFile;
 
 public class OAuth2Container extends GenericContainer<OAuth2Container> {
 
-    private static final int AUTH_SERVER_PORT = 9000;
-    private static final String IMAGE_NAME = "ghcr.io/markoniemi/oauth2-server:latest";
+  private static final int AUTH_SERVER_PORT = 9000;
+  private static final String IMAGE_NAME = "ghcr.io/markoniemi/oauth2-server:latest";
 
-    private final List<User> users = new ArrayList<>();
-    private final List<Client> clients = new ArrayList<>();
-    private String issuerUrl;
-    private String contextPath = "";
+  private final List<User> users = new ArrayList<>();
+  private final List<Client> clients = new ArrayList<>();
+  private String issuerUrl;
+  private String contextPath = "";
 
-    public OAuth2Container() {
-        this(DockerImageName.parse(IMAGE_NAME));
+  public OAuth2Container() {
+    this(DockerImageName.parse(IMAGE_NAME));
+  }
+
+  /** Uses the given image, e.g. to pin a released tag instead of {@code latest}. */
+  public OAuth2Container(DockerImageName image) {
+    super(image);
+    withExposedPorts(AUTH_SERVER_PORT);
+    waitForHealth();
+  }
+
+  private void waitForHealth() {
+    waitingFor(Wait.forHttp(contextPath + "/actuator/health")
+        .forStatusCode(200)
+        .withStartupTimeout(Duration.ofMinutes(2)));
+  }
+
+  public OAuth2Container withUser(String username, String password, String... roles) {
+    users.add(new User(username, password, new HashSet<>(asList(roles))));
+    return this;
+  }
+
+  public OAuth2Container withOAuth2Client(Client client) {
+    clients.add(client);
+    return this;
+  }
+
+  /**
+   * Fixes the issuer ({@code iss} claim and discovery). Without it the server derives the
+   * issuer from each request, which matches {@link #getAuthServerUrl()}.
+   */
+  public OAuth2Container withIssuerUrl(String issuerUrl) {
+    this.issuerUrl = issuerUrl;
+    return withEnv("SPRING_SECURITY_OAUTH2_AUTHORIZATIONSERVER_ISSUER", issuerUrl);
+  }
+
+  /** Serves the authorization server under the given servlet context path, e.g. {@code /auth}. */
+  public OAuth2Container withContextPath(String contextPath) {
+    this.contextPath = contextPath;
+    waitForHealth();
+    return withEnv("SERVER_SERVLET_CONTEXT_PATH", contextPath);
+  }
+
+  public OAuth2Container withConfigFile(String configResourcePath) {
+    withCopyFileToContainer(
+      MountableFile.forClasspathResource(configResourcePath),
+      "/config/application.yaml");
+    return this;
+  }
+
+  public String getAuthServerUrl() {
+    return "http://localhost:" + getMappedPort(AUTH_SERVER_PORT) + contextPath;
+  }
+
+  public String getIssuerUrl() {
+    if (issuerUrl != null) {
+      return issuerUrl;
+    }
+    return getAuthServerUrl();
+  }
+
+  public List<User> getUsers() {
+    return users;
+  }
+
+  public List<Client> getClients() {
+    return clients;
+  }
+
+  @Override
+  protected void configure() {
+    String yaml = generateConfigYaml();
+    if (yaml != null) {
+      withCopyToContainer(Transferable.of(yaml), "/config/application.yaml");
+    }
+  }
+
+  /**
+   * Builds the Spring configuration mounted into the container, or {@code null} when there is
+   * nothing to configure.
+   */
+  String generateConfigYaml() {
+    if (users.isEmpty() && clients.isEmpty()) {
+      return null;
     }
 
-    /** Uses the given image, e.g. to pin a released tag instead of {@code latest}. */
-    public OAuth2Container(DockerImageName image) {
-        super(image);
-        withExposedPorts(AUTH_SERVER_PORT);
-        waitForHealth();
+    Map<String, Object> root = new LinkedHashMap<>();
+    Map<String, Object> appMap = new LinkedHashMap<>();
+
+    if (!users.isEmpty()) {
+      List<Map<String, Object>> usersList = new ArrayList<>();
+      for (User user : users) {
+        Map<String, Object> userMap = new LinkedHashMap<>();
+        userMap.put("username", user.username());
+        userMap.put("password", user.password());
+        userMap.put("roles", new ArrayList<>(user.roles()));
+        usersList.add(userMap);
+      }
+      Map<String, Object> securityMap = new LinkedHashMap<>();
+      securityMap.put("users", usersList);
+      appMap.put("security", securityMap);
     }
 
-    private void waitForHealth() {
-        waitingFor(Wait.forHttp(contextPath + "/actuator/health")
-            .forStatusCode(200)
-            .withStartupTimeout(Duration.ofMinutes(2)));
+    if (!clients.isEmpty()) {
+      appMap.put("cors", Map.of("allowed-origins", corsOrigins()));
+      Map<String, Object> clientsMap = new LinkedHashMap<>();
+      for (Client client : clients) {
+        clientsMap.put(client.getClientId(), toClientProperties(client));
+      }
+
+      Map<String, Object> authserverMap = new LinkedHashMap<>();
+      authserverMap.put("client", clientsMap);
+      Map<String, Object> oauth2Map = new LinkedHashMap<>();
+      oauth2Map.put("authorizationserver", authserverMap);
+      Map<String, Object> secMap = new LinkedHashMap<>();
+      secMap.put("oauth2", oauth2Map);
+      Map<String, Object> springMap = new LinkedHashMap<>();
+      springMap.put("security", secMap);
+      root.put("spring", springMap);
     }
 
-    public OAuth2Container withUser(String username, String password, String... roles) {
-        users.add(new User(username, password, new HashSet<>(asList(roles))));
-        return this;
+    if (!appMap.isEmpty()) {
+      root.put("app", appMap);
     }
 
-    public OAuth2Container withOAuth2Client(Client client) {
-        clients.add(client);
-        return this;
+    try {
+      return new ObjectMapper(new YAMLFactory()).writeValueAsString(root);
+    } catch (JsonProcessingException e) {
+      throw new IllegalStateException("Failed to generate container configuration", e);
+    }
+  }
+
+  /** Origins (scheme://host:port) of all client redirect URIs, so browser apps can call the server. */
+  private List<String> corsOrigins() {
+    Set<String> origins = new LinkedHashSet<>();
+    for (Client client : clients) {
+      List<String> uris = new ArrayList<>(client.getRedirectUris());
+      uris.addAll(client.getPostLogoutRedirectUris());
+      for (String uri : uris) {
+        URI parsed = URI.create(uri);
+        origins.add(parsed.getScheme() + "://" + parsed.getAuthority());
+      }
+    }
+    return new ArrayList<>(origins);
+  }
+
+  /** Maps a client to Spring Boot's {@code spring.security.oauth2.authorizationserver.client.<id>} properties. */
+  private static Map<String, Object> toClientProperties(Client client) {
+    boolean publicClient = client.isPublicClient();
+
+    List<String> grantTypes = new ArrayList<>(client.getGrantTypes());
+    if (publicClient) {
+      // The authorization server never issues refresh tokens to public clients
+      grantTypes.remove("refresh_token");
     }
 
-    /**
-     * Fixes the issuer ({@code iss} claim and discovery). Without it the server derives the
-     * issuer from each request, which matches {@link #getAuthServerUrl()}.
-     */
-    public OAuth2Container withIssuerUrl(String issuerUrl) {
-        this.issuerUrl = issuerUrl;
-        return withEnv("SPRING_SECURITY_OAUTH2_AUTHORIZATIONSERVER_ISSUER", issuerUrl);
+    Map<String, Object> registration = new LinkedHashMap<>();
+    registration.put("client-id", client.getClientId());
+    if (!publicClient) {
+      registration.put("client-secret", client.getClientSecret());
     }
-
-    /** Serves the authorization server under the given servlet context path, e.g. {@code /auth}. */
-    public OAuth2Container withContextPath(String contextPath) {
-        this.contextPath = contextPath;
-        waitForHealth();
-        return withEnv("SERVER_SERVLET_CONTEXT_PATH", contextPath);
+    registration.put("client-authentication-methods",
+      List.of(publicClient ? "none" : client.getTokenEndpointAuthMethod()));
+    registration.put("authorization-grant-types", grantTypes);
+    registration.put("redirect-uris", new ArrayList<>(client.getRedirectUris()));
+    if (!client.getPostLogoutRedirectUris().isEmpty()) {
+      registration.put("post-logout-redirect-uris", new ArrayList<>(client.getPostLogoutRedirectUris()));
     }
+    registration.put("scopes", new ArrayList<>(client.getScopes()));
 
-    public OAuth2Container withConfigFile(String configResourcePath) {
-        withCopyFileToContainer(
-            MountableFile.forClasspathResource(configResourcePath),
-            "/config/application.yaml");
-        return this;
+    Map<String, Object> properties = new LinkedHashMap<>();
+    properties.put("registration", registration);
+    // Always explicit: Spring Authorization Server requires PKCE unless told otherwise
+    properties.put("require-proof-key", client.isRequireProofKey() || publicClient);
+
+    Map<String, Object> token = new LinkedHashMap<>();
+    if (client.getAccessTokenTimeToLive() != null) {
+      token.put("access-token-time-to-live", client.getAccessTokenTimeToLive().toString());
     }
-
-    public String getAuthServerUrl() {
-        return "http://localhost:" + getMappedPort(AUTH_SERVER_PORT) + contextPath;
+    if (client.getRefreshTokenTimeToLive() != null) {
+      token.put("refresh-token-time-to-live", client.getRefreshTokenTimeToLive().toString());
     }
-
-    public String getIssuerUrl() {
-        if (issuerUrl != null) {
-            return issuerUrl;
-        }
-        return getAuthServerUrl();
+    if (!token.isEmpty()) {
+      properties.put("token", token);
     }
-
-    public List<User> getUsers() {
-        return users;
-    }
-
-    public List<Client> getClients() {
-        return clients;
-    }
-
-    @Override
-    protected void configure() {
-        String yaml = generateConfigYaml();
-        if (yaml != null) {
-            withCopyToContainer(Transferable.of(yaml), "/config/application.yaml");
-        }
-    }
-
-    /**
-     * Builds the Spring configuration mounted into the container, or {@code null} when there is
-     * nothing to configure.
-     */
-    String generateConfigYaml() {
-        if (users.isEmpty() && clients.isEmpty()) {
-            return null;
-        }
-
-        Map<String, Object> root = new LinkedHashMap<>();
-        Map<String, Object> appMap = new LinkedHashMap<>();
-
-        if (!users.isEmpty()) {
-            List<Map<String, Object>> usersList = new ArrayList<>();
-            for (User user : users) {
-                Map<String, Object> userMap = new LinkedHashMap<>();
-                userMap.put("username", user.getUsername());
-                userMap.put("password", user.getPassword());
-                userMap.put("roles", new ArrayList<>(user.getRoles()));
-                usersList.add(userMap);
-            }
-            Map<String, Object> securityMap = new LinkedHashMap<>();
-            securityMap.put("users", usersList);
-            appMap.put("security", securityMap);
-        }
-
-        if (!clients.isEmpty()) {
-            appMap.put("cors", Map.of("allowed-origins", corsOrigins()));
-            Map<String, Object> clientsMap = new LinkedHashMap<>();
-            for (Client client : clients) {
-                clientsMap.put(client.getClientId(), toClientProperties(client));
-            }
-
-            Map<String, Object> authserverMap = new LinkedHashMap<>();
-            authserverMap.put("client", clientsMap);
-            Map<String, Object> oauth2Map = new LinkedHashMap<>();
-            oauth2Map.put("authorizationserver", authserverMap);
-            Map<String, Object> secMap = new LinkedHashMap<>();
-            secMap.put("oauth2", oauth2Map);
-            Map<String, Object> springMap = new LinkedHashMap<>();
-            springMap.put("security", secMap);
-            root.put("spring", springMap);
-        }
-
-        if (!appMap.isEmpty()) {
-            root.put("app", appMap);
-        }
-
-        try {
-            return new ObjectMapper(new YAMLFactory()).writeValueAsString(root);
-        } catch (JsonProcessingException e) {
-            throw new IllegalStateException("Failed to generate container configuration", e);
-        }
-    }
-
-    /** Origins (scheme://host:port) of all client redirect URIs, so browser apps can call the server. */
-    private List<String> corsOrigins() {
-        Set<String> origins = new LinkedHashSet<>();
-        for (Client client : clients) {
-            List<String> uris = new ArrayList<>(client.getRedirectUris());
-            uris.addAll(client.getPostLogoutRedirectUris());
-            for (String uri : uris) {
-                URI parsed = URI.create(uri);
-                origins.add(parsed.getScheme() + "://" + parsed.getAuthority());
-            }
-        }
-        return new ArrayList<>(origins);
-    }
-
-    /** Maps a client to Spring Boot's {@code spring.security.oauth2.authorizationserver.client.<id>} properties. */
-    private static Map<String, Object> toClientProperties(Client client) {
-        boolean publicClient = client.isPublicClient();
-
-        List<String> grantTypes = new ArrayList<>(client.getGrantTypes());
-        if (publicClient) {
-            // The authorization server never issues refresh tokens to public clients
-            grantTypes.remove("refresh_token");
-        }
-
-        Map<String, Object> registration = new LinkedHashMap<>();
-        registration.put("client-id", client.getClientId());
-        if (!publicClient) {
-            registration.put("client-secret", client.getClientSecret());
-        }
-        registration.put("client-authentication-methods",
-            List.of(publicClient ? "none" : client.getTokenEndpointAuthMethod()));
-        registration.put("authorization-grant-types", grantTypes);
-        registration.put("redirect-uris", new ArrayList<>(client.getRedirectUris()));
-        if (!client.getPostLogoutRedirectUris().isEmpty()) {
-            registration.put("post-logout-redirect-uris", new ArrayList<>(client.getPostLogoutRedirectUris()));
-        }
-        registration.put("scopes", new ArrayList<>(client.getScopes()));
-
-        Map<String, Object> properties = new LinkedHashMap<>();
-        properties.put("registration", registration);
-        // Always explicit: Spring Authorization Server requires PKCE unless told otherwise
-        properties.put("require-proof-key", client.isRequireProofKey() || publicClient);
-
-        Map<String, Object> token = new LinkedHashMap<>();
-        if (client.getAccessTokenTimeToLive() != null) {
-            token.put("access-token-time-to-live", client.getAccessTokenTimeToLive().toString());
-        }
-        if (client.getRefreshTokenTimeToLive() != null) {
-            token.put("refresh-token-time-to-live", client.getRefreshTokenTimeToLive().toString());
-        }
-        if (!token.isEmpty()) {
-            properties.put("token", token);
-        }
-        return properties;
-    }
+    return properties;
+  }
 }
