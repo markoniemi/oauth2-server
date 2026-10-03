@@ -100,7 +100,7 @@ curl http://localhost:9000/.well-known/openid-configuration
 - **API Change**: `OAuth2AuthorizationServerConfiguration.applyDefaultSecurity()` → `http.oauth2AuthorizationServer()` configurer
 - **Filter Chains**: Must use `securityMatcher()` to avoid UnreachableFilterChainException with multiple chains
 - **Public Clients**: Now require explicit `ClientAuthenticationMethod.NONE` for PKCE flows
-- **Properties Migrator**: Use spring-boot-properties-migrator during upgrade to identify deprecated properties
+- **Properties Migrator**: used during the Boot 4 upgrade to identify deprecated properties; removed afterwards (no warnings)
 
 ## Default Credentials (Development Only)
 

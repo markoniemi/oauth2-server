@@ -249,12 +249,12 @@ Restore `ClientConfig.java` from git; dynamic-form Phase 1 changes are harmless 
 **Goal:** Tidy `pom.xml`. No runtime behavior change.
 
 ### Tasks
-- [ ] Replace deprecated `spring-boot-starter-oauth2-authorization-server` with `spring-boot-starter-security-oauth2-authorization-server`; drop now-redundant `-web` / `-security` starters.
-- [ ] `jakarta.validation-api` + `hibernate-validator` → `spring-boot-starter-validation`.
-- [ ] Remove unused properties: `maven-compiler-plugin.version`, `maven.compiler.source/target`, `image.registry` (or use it in jib `<to>`).
-- [ ] Move versions to `<properties>`: htmlunit, commons-io, lombok, jib.
-- [ ] Remove `spring-boot-properties-migrator` (check startup log for migration warnings first).
-- [ ] Drop `commons-io` if unused after Phase 1.
+- [x] Replace deprecated `spring-boot-starter-oauth2-authorization-server` with `spring-boot-starter-security-oauth2-authorization-server`; drop now-redundant `-web` / `-security` starters.
+- [x] ~~`jakarta.validation-api` + `hibernate-validator` → `spring-boot-starter-validation`~~ — removed entirely: no code uses Bean Validation after Phase 4.
+- [x] Remove unused properties: `maven-compiler-plugin.version`, `maven.compiler.source/target`; `image.registry` now used in jib `<to>`; compiler plugin version and `<release>` left to the Boot parent.
+- [x] Move versions to `<properties>`: htmlunit, jib, commons-io; Lombok processor uses Boot-managed `${lombok.version}`.
+- [x] Remove `spring-boot-properties-migrator` (no migration warnings in startup log) (check startup log for migration warnings first).
+- [x] Drop direct `commons-io` (unused); pinned 2.16.1 in `dependencyManagement` because the transitive version (2.10.0) is affected by CVE-2024-47554.
 
 ### Validation
 - Standard procedure. Compare `mvn dependency:tree` before/after for unexpected removals.
@@ -287,6 +287,6 @@ Restore `ClientConfig.java` from git; dynamic-form Phase 1 changes are harmless 
 | 1 | 8c61b3e | b7393e9 | green: oauth2-server 30 unit + 19 IT; dynamic-form backend 17 + 3 IT, frontend 47 | green / green | 2026-10-03 |
 | 2 | 6d1c3c2 | — | green: oauth2-server 32 unit + 19 IT; dynamic-form backend 17 + 3 IT (FrontendIT login/logout), frontend 47; smoke: default client → login, CORS 5173 allowed / other 403 | green / green | 2026-10-03 |
 | 3 | bd455be | — | green: oauth2-server 34 unit + 21 IT; dynamic-form backend 17 + 3 IT, frontend 47; smoke: issuer follows request host, JWKS served | green / green | 2026-10-03 |
-| 4 | (this commit) | — | green: oauth2-server 35 unit + 21 IT; dynamic-form backend 17 + 3 IT, frontend 47 | pending | 2026-10-03 |
-| 5 | |  | | | |
+| 4 | 2578833 | — | green: oauth2-server 35 unit + 21 IT; dynamic-form backend 17 + 3 IT, frontend 47 | green / green | 2026-10-03 |
+| 5 | (this commit) | — | green: oauth2-server 35 unit + 21 IT; dynamic-form backend 17 + 3 IT, frontend 47; dependency tree: only intended removals | pending | 2026-10-03 |
 | 6 | |  | | | |
