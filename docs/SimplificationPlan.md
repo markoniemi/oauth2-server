@@ -121,10 +121,10 @@ If step 6 fails: fix forward with a new commit, or `git revert` the phase commit
 **Goal:** Make local validation safe and repeatable. No behavior change.
 
 ### Tasks
-- [ ] Bind jib `build` (push) to CI only; locally use `jib:dockerBuild`.
-  Option: profile `ci` with the `build` execution, default execution `dockerBuild`; CI workflow runs `mvn -Pci ...`.
-- [ ] Add a test that reads the YAML `OAuth2Container` generates (extract generation into a package-private method returning the map/string) — needed to test Phase 1 without Docker.
-- [ ] Record baseline: dynamic-form `mvn verify` + `npm test` green against current `master`.
+- [x] Bind jib `build` (push) to CI only; locally use `jib:dockerBuild`.
+  Done: default execution `jib-docker` (`dockerBuild`, pre-integration-test); profile `ci` adds `jib-push` (`build`, deploy phase), so CI publishes only after ITs pass. CI runs `mvn -B -Pci deploy` (was `install deploy`, which ran the build twice).
+- [x] Add a test that reads the YAML `OAuth2Container` generates (extract generation into a package-private method returning the map/string) — needed to test Phase 1 without Docker.
+- [x] Record baseline: dynamic-form `mvn verify` + `npm test` green against current `master`.
 
 ### Validation
 - Standard procedure; image digest built locally, nothing pushed (`docker images ghcr.io/markoniemi/oauth2-server`).
@@ -280,8 +280,8 @@ Restore `ClientConfig.java` from git; dynamic-form Phase 1 changes are harmless 
 
 | Phase | oauth2-server commit | dynamic-form commit | Local validation | CI (oauth2-server / dynamic-form) | Date |
 |-------|----------------------|---------------------|------------------|-----------------------------------|------|
-| Pre | | — | | | |
-| 0 | |  | | | |
+| Pre | 50e6c44 | — | n/a (docs/config only) | green / green | 2026-10-03 |
+| 0 | (this commit) | — | green: oauth2-server 25 unit + 19 IT; dynamic-form backend 17 + 3 IT, frontend 47 | pending | 2026-10-03 |
 | 1 | |  | | | |
 | 2 | |  | | | |
 | 3 | |  | | | |

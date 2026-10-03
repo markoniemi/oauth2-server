@@ -86,8 +86,36 @@ public class OAuth2Container extends GenericContainer<OAuth2Container> {
     }
 
     private void generateAndMountConfigYaml() throws IOException {
-        if (users.isEmpty() && clients.isEmpty()) {
+        String yaml = generateConfigYaml();
+        if (yaml == null) {
             return;
+        }
+
+        File tempDir = Files.createTempDirectory("oauth2-config-").toFile();
+        File configFile = new File(tempDir, "application.yaml");
+        Files.writeString(configFile.toPath(), yaml);
+
+        withCopyFileToContainer(
+            MountableFile.forHostPath(configFile.getAbsolutePath()),
+            "/config/application.yaml");
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            try {
+                Files.delete(configFile.toPath());
+                Files.delete(tempDir.toPath());
+            } catch (IOException e) {
+                // Ignore cleanup errors
+            }
+        }));
+    }
+
+    /**
+     * Builds the Spring configuration mounted into the container, or {@code null} when there is
+     * nothing to configure.
+     */
+    String generateConfigYaml() throws IOException {
+        if (users.isEmpty() && clients.isEmpty()) {
+            return null;
         }
 
         Map<String, Object> root = new LinkedHashMap<>();
@@ -143,21 +171,6 @@ public class OAuth2Container extends GenericContainer<OAuth2Container> {
             root.put("spring", springMap);
         }
 
-        File tempDir = Files.createTempDirectory("oauth2-config-").toFile();
-        File configFile = new File(tempDir, "application.yaml");
-        new ObjectMapper(new YAMLFactory()).writeValue(configFile, root);
-
-        withCopyFileToContainer(
-            MountableFile.forHostPath(configFile.getAbsolutePath()),
-            "/config/application.yaml");
-
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            try {
-                Files.delete(configFile.toPath());
-                Files.delete(tempDir.toPath());
-            } catch (IOException e) {
-                // Ignore cleanup errors
-            }
-        }));
+        return new ObjectMapper(new YAMLFactory()).writeValueAsString(root);
     }
 }
