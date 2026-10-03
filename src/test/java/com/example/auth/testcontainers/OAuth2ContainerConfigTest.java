@@ -134,6 +134,22 @@ public class OAuth2ContainerConfigTest {
         assertNull(at(parse(container.generateConfigYaml()), "app", "cors"));
     }
 
+    @Test
+    public void issuerUrlIsPassedToServer() {
+        OAuth2Container container = new OAuth2Container().withIssuerUrl("http://auth.example:9000");
+
+        assertEquals("http://auth.example:9000",
+            container.getEnvMap().get("SPRING_SECURITY_OAUTH2_AUTHORIZATIONSERVER_ISSUER"));
+        assertEquals("http://auth.example:9000", container.getIssuerUrl());
+    }
+
+    @Test
+    public void contextPathIsPassedToServer() {
+        OAuth2Container container = new OAuth2Container().withContextPath("/auth");
+
+        assertEquals("/auth", container.getEnvMap().get("SERVER_SERVLET_CONTEXT_PATH"));
+    }
+
     private static Map<String, Object> clientEntry(OAuth2Container container, String clientId)
         throws Exception {
         return at(parse(container.generateConfigYaml()),

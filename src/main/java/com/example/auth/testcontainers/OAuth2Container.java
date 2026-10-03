@@ -28,6 +28,7 @@ public class OAuth2Container extends GenericContainer<OAuth2Container> {
     private final List<User> users = new ArrayList<>();
     private final List<Client> clients = new ArrayList<>();
     private String issuerUrl;
+    private String contextPath = "";
 
     public OAuth2Container() {
         this(DockerImageName.parse(IMAGE_NAME));
@@ -37,7 +38,11 @@ public class OAuth2Container extends GenericContainer<OAuth2Container> {
     public OAuth2Container(DockerImageName image) {
         super(image);
         withExposedPorts(AUTH_SERVER_PORT);
-        waitingFor(Wait.forHttp("/actuator/health")
+        waitForHealth();
+    }
+
+    private void waitForHealth() {
+        waitingFor(Wait.forHttp(contextPath + "/actuator/health")
             .forStatusCode(200)
             .withStartupTimeout(Duration.ofMinutes(2)));
     }
@@ -52,9 +57,20 @@ public class OAuth2Container extends GenericContainer<OAuth2Container> {
         return this;
     }
 
+    /**
+     * Fixes the issuer ({@code iss} claim and discovery). Without it the server derives the
+     * issuer from each request, which matches {@link #getAuthServerUrl()}.
+     */
     public OAuth2Container withIssuerUrl(String issuerUrl) {
         this.issuerUrl = issuerUrl;
-        return this;
+        return withEnv("SPRING_SECURITY_OAUTH2_AUTHORIZATIONSERVER_ISSUER", issuerUrl);
+    }
+
+    /** Serves the authorization server under the given servlet context path, e.g. {@code /auth}. */
+    public OAuth2Container withContextPath(String contextPath) {
+        this.contextPath = contextPath;
+        waitForHealth();
+        return withEnv("SERVER_SERVLET_CONTEXT_PATH", contextPath);
     }
 
     public OAuth2Container withConfigFile(String configResourcePath) {
@@ -65,7 +81,7 @@ public class OAuth2Container extends GenericContainer<OAuth2Container> {
     }
 
     public String getAuthServerUrl() {
-        return "http://localhost:" + getMappedPort(AUTH_SERVER_PORT);
+        return "http://localhost:" + getMappedPort(AUTH_SERVER_PORT) + contextPath;
     }
 
     public String getIssuerUrl() {

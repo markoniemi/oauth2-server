@@ -41,7 +41,7 @@ OAuth2 Authorization Server providing OpenID Connect (OIDC) discovery, JWT token
 - `SecurityConfig.java`: Dual filter chains
   - Chain 1: OAuth2 authorization server + OIDC (matches `/oauth2/**`, `/.well-known/**`)
   - Chain 2: API security with form login (catches all other requests)
-- `OAuth2AuthServerConfig.java`: AuthorizationServerSettings and JWKSource<SecurityContext> beans
+- Signing keys (`JWKSource`) and `AuthorizationServerSettings`: provided by Spring Boot auto-configuration; issuer from `spring.security.oauth2.authorizationserver.issuer` (unset = derived from request)
 - Clients: registered by Spring Boot from `spring.security.oauth2.authorizationserver.client.*` properties (default `frontend-client` in `application.yaml`)
 - `CorsProperties.java`: allowed CORS origins (`app.cors.allowed-origins`)
 - `SecurityProperties.java`: User configuration from `app.security.users` YAML

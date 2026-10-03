@@ -3,6 +3,9 @@ package com.example.auth.testcontainers;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.springframework.web.client.RestClient;
+import java.util.Map;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 public class ContainerIT {
@@ -48,6 +51,32 @@ public class ContainerIT {
         String issuer = container.getIssuerUrl();
         assertNotNull(issuer);
         assertTrue(issuer.startsWith("http://"));
+    }
+
+    @Test
+    public void discoveredIssuerMatchesContainerIssuerUrl() {
+        assertEquals(container.getIssuerUrl(), discoveredIssuer(container));
+    }
+
+    @Test
+    public void customIssuerAndContextPathAreApplied() {
+        try (OAuth2Container custom = new OAuth2Container()
+            .withIssuerUrl("http://auth.example:9000")
+            .withContextPath("/auth")) {
+            custom.start();
+
+            assertTrue(custom.getAuthServerUrl().endsWith("/auth"));
+            assertEquals("http://auth.example:9000", discoveredIssuer(custom));
+        }
+    }
+
+    private static String discoveredIssuer(OAuth2Container target) {
+        Map<?, ?> discovery = RestClient.create()
+            .get()
+            .uri(target.getAuthServerUrl() + "/.well-known/openid-configuration")
+            .retrieve()
+            .body(Map.class);
+        return (String) discovery.get("issuer");
     }
 
     @Test

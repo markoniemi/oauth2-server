@@ -4,7 +4,8 @@ spring:
   security:
     oauth2:
       authorizationserver:
-        issuer: http://localhost:9000
+        # issuer: unset, so it is derived from each request (override with
+        # SPRING_SECURITY_OAUTH2_AUTHORIZATIONSERVER_ISSUER for a fixed value).
         # Default client for local development and docker-compose. Clients added via
         # config/application.yaml (e.g. by OAuth2Container) are merged with this map.
         client:

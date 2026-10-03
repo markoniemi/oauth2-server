@@ -16,7 +16,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
@@ -33,15 +32,12 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class SecurityConfig {
   @Bean
   @Order(1)
-  public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http,
-      AuthorizationServerSettings authorizationServerSettings)
+  public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http)
       throws Exception {
     http.oauth2AuthorizationServer((authorizationServer) -> {
           // Match all authorization server endpoints, including OIDC /connect/logout and /userinfo
           http.securityMatcher(authorizationServer.getEndpointsMatcher());
-          authorizationServer
-              .authorizationServerSettings(authorizationServerSettings)
-              .oidc(Customizer.withDefaults());
+          authorizationServer.oidc(Customizer.withDefaults());
         })
         // Require an authenticated user so anonymous authorization requests trigger the login entry point
         .authorizeHttpRequests((authorize) -> authorize.anyRequest().authenticated())

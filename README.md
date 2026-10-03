@@ -63,7 +63,6 @@ src/
 │   ├── java/com/example/auth/
 │   │   ├── config/
 │   │   │   ├── CorsProperties.java
-│   │   │   ├── OAuth2AuthServerConfig.java
 │   │   │   ├── SecurityConfig.java
 │   │   │   └── SecurityProperties.java
 │   │   └── testcontainers/

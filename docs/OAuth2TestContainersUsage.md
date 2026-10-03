@@ -108,7 +108,7 @@ container = new OAuth2Container()
     .withContextPath("/auth");
 container.start();
 
-String url = container.getAuthServerUrl();  // http://localhost:randomPort
+String url = container.getAuthServerUrl();  // http://localhost:randomPort/auth
 String issuer = container.getIssuerUrl();   // https://auth.example.com
 ```
 
@@ -127,8 +127,8 @@ Main entry point for the TestContainers integration.
 
 - `withUser(String username, String password, String... roles)` - Add a user with roles
 - `withOAuth2Client(Client client)` - Register an OAuth2 client
-- `withIssuerUrl(String issuerUrl)` - Set custom issuer URL
-- `withContextPath(String contextPath)` - Set custom context path
+- `withIssuerUrl(String issuerUrl)` - Fix the issuer (`iss` claim, discovery). Default: derived from the request URL, i.e. equals `getAuthServerUrl()`
+- `withContextPath(String contextPath)` - Serve under a servlet context path (included in `getAuthServerUrl()`)
 - `getAuthServerUrl()` - Get the server URL (http://localhost:mappedPort)
 - `getIssuerUrl()` - Get the issuer URL (custom if set, otherwise auth server URL)
 - `start()` - Start the container
@@ -325,11 +325,11 @@ For testing Spring Boot applications that depend on OAuth2:
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class MyApplicationIT {
     
-    private static Container oauth2;
+    private static OAuth2Container oauth2;
     
     @DynamicPropertySource
     static void overrideProperties(DynamicPropertyRegistry registry) {
-        registry.add("spring.security.oauth2.authorizationserver.issuer", 
+        registry.add("spring.security.oauth2.resourceserver.jwt.issuer-uri",
             oauth2::getIssuerUrl);
     }
     

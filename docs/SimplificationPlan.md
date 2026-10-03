@@ -208,19 +208,20 @@ Restore `ClientConfig.java` from git; dynamic-form Phase 1 changes are harmless 
 **Goal:** Delete `OAuth2AuthServerConfig`; issuer and endpoints come from properties.
 
 ### Tasks
-- [ ] Delete `OAuth2AuthServerConfig` (Boot provides `JWKSource`, `JwtDecoder`, `AuthorizationServerSettings`).
-- [ ] Remove `authorizationServerSettings(...)` from `SecurityConfig` configurer call.
-- [ ] Issuer: keep `spring.security.oauth2.authorizationserver.issuer: ${AUTH_ISSUER:http://localhost:9000}` in `application.yaml`.
+- [x] Delete `OAuth2AuthServerConfig` (Boot provides `JWKSource`, `JwtDecoder`, `AuthorizationServerSettings`).
+- [x] Remove `authorizationServerSettings(...)` from `SecurityConfig` configurer call.
+- [x] Issuer: ~~keep `${AUTH_ISSUER:http://localhost:9000}`~~ **decided: unset** — derived from each request; fixed value via standard `SPRING_SECURITY_OAUTH2_AUTHORIZATIONSERVER_ISSUER` env (no custom placeholder needed).
   - **Decide:** fixed default vs. unset (unset → issuer derived from each request's host, which works for any mapped port but yields different `iss` for `localhost:9000` vs `auth:9000`).
-- [ ] `OAuth2Container.withIssuerUrl()` → `withEnv("SPRING_SECURITY_OAUTH2_AUTHORIZATIONSERVER_ISSUER", url)`.
-- [ ] `contextPath`: either implement (`withEnv("SERVER_SERVLET_CONTEXT_PATH", path)` + adjust health-check path and `getAuthServerUrl()`) or remove it from `ServerConfig` and docs. README currently claims support.
-- [ ] Optional: `app.jwk.keystore` property for a persistent signing key, so tokens survive restarts (Boot generates a new RSA key per start).
+- [x] `OAuth2Container.withIssuerUrl()` → `withEnv("SPRING_SECURITY_OAUTH2_AUTHORIZATIONSERVER_ISSUER", url)`.
+- [x] `contextPath`: **implemented** in `OAuth2Container.withContextPath()` (`ServerConfig.contextPath` still unused — Phase 4). Was: either implement (`withEnv("SERVER_SERVLET_CONTEXT_PATH", path)` + adjust health-check path and `getAuthServerUrl()`) or remove it from `ServerConfig` and docs. README currently claims support.
+- [-] Skipped (optional): `app.jwk.keystore` property for a persistent signing key, so tokens survive restarts (Boot generates a new RSA key per start).
 
 ### Validation
 - Standard procedure, plus:
   - `curl http://localhost:9000/.well-known/openid-configuration` → `issuer` is `http://localhost:9000`.
   - dynamic-form backend accepts tokens (issuer match).
   - **compose:** backend uses `http://auth:9000`, browser uses `http://localhost:9000`. Verify whether this mismatch exists today; if so, set `AUTH_ISSUER` explicitly in `docker-compose.yaml` and track the fix in dynamic-form separately.
+  - **Result (2026-10-03):** before Phase 3 the issuer was always `http://localhost:9000`, so a backend configured with `issuer-uri: http://auth:9000` failed issuer validation at discovery. Now discovery via `auth:9000` reports `http://auth:9000`, but tokens obtained by the browser via `localhost:9000` still carry `iss=http://localhost:9000`. **Follow-up for dynamic-form compose:** set `SPRING_SECURITY_OAUTH2_AUTHORIZATIONSERVER_ISSUER=http://localhost:9000` on the `auth` service and let the backend use `jwk-set-uri: http://auth:9000/oauth2/jwks` with `issuer-uri`-independent issuer validation (or a shared hostname).
 
 ---
 
@@ -284,8 +285,8 @@ Restore `ClientConfig.java` from git; dynamic-form Phase 1 changes are harmless 
 | Pre | 50e6c44 | — | n/a (docs/config only) | green / green | 2026-10-03 |
 | 0 | dfbdc7a, 8ad78d8 (CI fix) | — | green: oauth2-server 25 unit + 19 IT; dynamic-form backend 17 + 3 IT, frontend 47 | red → fixed by 8ad78d8; green / green | 2026-10-03 |
 | 1 | 8c61b3e | b7393e9 | green: oauth2-server 30 unit + 19 IT; dynamic-form backend 17 + 3 IT, frontend 47 | green / green | 2026-10-03 |
-| 2 | (this commit) | — | green: oauth2-server 32 unit + 19 IT; dynamic-form backend 17 + 3 IT (FrontendIT login/logout), frontend 47; smoke: default client → login, CORS 5173 allowed / other 403 | pending | 2026-10-03 |
-| 3 | |  | | | |
+| 2 | 6d1c3c2 | — | green: oauth2-server 32 unit + 19 IT; dynamic-form backend 17 + 3 IT (FrontendIT login/logout), frontend 47; smoke: default client → login, CORS 5173 allowed / other 403 | green / green | 2026-10-03 |
+| 3 | (this commit) | — | green: oauth2-server 34 unit + 21 IT; dynamic-form backend 17 + 3 IT, frontend 47; smoke: issuer follows request host, JWKS served | pending | 2026-10-03 |
 | 4 | |  | | | |
 | 5 | |  | | | |
 | 6 | |  | | | |
