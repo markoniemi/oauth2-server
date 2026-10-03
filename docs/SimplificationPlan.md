@@ -2,7 +2,7 @@
 
 **Date:** 2026-10-03
 **Baseline:** Spring Boot 4.0.3, Spring Security 7.0, commit `ac2c60d`
-**Status:** Done (Pre-Phase settings.json items left to the user)
+**Status:** Done
 
 ## Goal
 
@@ -92,14 +92,14 @@ If step 6 fails: fix forward with a new commit, or `git revert` the phase commit
 | Docker / Maven / Java / Node | 29.2 / 3.9.14 / 21.0.1 / 24.13 | Docker must be running for ITs and `jib:dockerBuild` |
 
 ### Tasks
-- [ ] **Stop hook** in `.claude/settings.json` is copied from dynamic-form (`cd frontend && npm run lint:fix ... cd ../backend && mvn compile`); no `frontend/` or `backend/` here. Replace with `mvn -q compile`.
-- [~] **`.env` read block** *(claude.json deleted; `deny` rule pending — user)*: `.claude/claude.json` is not a Claude Code config file, so its block never applies. Delete it and add to `settings.json`:
+- [x] **Stop hook** in `.claude/settings.json` is copied from dynamic-form (`cd frontend && npm run lint:fix ... cd ../backend && mvn compile`); no `frontend/` or `backend/` here. Replace with `mvn -q compile`.
+- [x] **`.env` read block**: `.claude/claude.json` is not a Claude Code config file, so its block never applies. Delete it and add to `settings.json`:
   ```json
   "deny": ["Read(./.env)", "Read(./.env.*)"]
   ```
-- [ ] **Playwright permissions**: allowlist uses `mcp__playwright__*`, but plugin tools are `mcp__plugin_playwright_playwright__*`. Fix the names. Remove `enabledMcpjsonServers: ["playwright"]` (no `.mcp.json` in this repo).
-- [ ] **IntelliJ MCP permissions**: add `mcp__idea__*` to the allowlist to avoid a prompt per call.
-- [~] **Remove unrelated leftovers**: `aws` / `terraform` permissions *(pending — user)*, `.claude/skills/terraform.yaml`, and the dynamic-form skills duplicated in `.claude/skills/` plus `.claude/commands/test.md` (keep them in dynamic-form only) *(done)*.
+- [x] **Playwright permissions**: allowlist uses `mcp__playwright__*`, but plugin tools are `mcp__plugin_playwright_playwright__*`. Fix the names. Remove `enabledMcpjsonServers: ["playwright"]` (no `.mcp.json` in this repo).
+- [x] **IntelliJ MCP permissions**: add `mcp__idea__*` to the allowlist to avoid a prompt per call.
+- [x] **Remove unrelated leftovers**: `aws` / `terraform` / `npm` / `npx` / `tsc` permissions, `.claude/skills/terraform.yaml`, and the dynamic-form skills duplicated in `.claude/skills/` plus `.claude/commands/test.md` (keep them in dynamic-form only) *(done)*.
 - [x] **Update `.claude/CLAUDE.md`**:
   - Spring Boot 3.5.6 → 4.0.3.
   - Link `../OAuth2TestContainersUsage.md` → `../docs/OAuth2TestContainersUsage.md`.
