@@ -38,14 +38,20 @@ jobs:
           </settings>
           EOF
 
-      - name: Build with Maven
-        run: mvn -B -Pci deploy -Djib.to.auth.username=${{ github.actor }} -Djib.to.auth.password=${{ secrets.PACKAGE_UPDATE_TOKEN }} -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn
+      # Run every module's tests before anything is published: in one reactor run, auth-server
+      # would deploy and push its image before the auth-server-testcontainers ITs run
+      - name: Build and test
+        run: mvn -B install -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn
+
+      - name: Publish artifacts and image
+        if: github.event_name == 'push'
+        run: mvn -B -Pci deploy -DskipTests -Djib.to.auth.username=${{ github.actor }} -Djib.to.auth.password=${{ secrets.PACKAGE_UPDATE_TOKEN }} -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn
         env:
           MAVEN_USERNAME: ${{ secrets.REPSY_USER }}
           MAVEN_PASSWORD: ${{ secrets.REPSY_TOKEN }}
 
       - name: Trigger dynamic-form build
-        if: success()
+        if: success() && github.event_name == 'push'
         run: |
           gh api repos/markoniemi/dynamic-form/dispatches \
             --input - <<'EOF'

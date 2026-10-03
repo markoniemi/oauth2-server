@@ -185,6 +185,15 @@ public class OAuth2Container extends GenericContainer<OAuth2Container> {
       // The authorization server never issues refresh tokens to public clients
       grantTypes.remove("refresh_token");
     }
+    // Fail here rather than after the container's startup timeout when the server rejects the client
+    if (grantTypes.isEmpty()) {
+      throw new IllegalStateException("Client '" + client.getClientId()
+          + "' has no usable grant types (public clients cannot use refresh_token alone)");
+    }
+    if (grantTypes.contains("authorization_code") && client.getRedirectUris().isEmpty()) {
+      throw new IllegalStateException("Client '" + client.getClientId()
+          + "' uses authorization_code but has no redirect URIs");
+    }
 
     Map<String, Object> registration = new LinkedHashMap<>();
     registration.put("client-id", client.getClientId());

@@ -2,7 +2,7 @@
 
 **Date:** 2026-10-03
 **Baseline:** Spring Boot 4.0.3, Spring Security 7.0, commit `ac2c60d`
-**Status:** In progress
+**Status:** Done (Pre-Phase settings.json items left to the user)
 
 ## Goal
 
@@ -122,7 +122,7 @@ If step 6 fails: fix forward with a new commit, or `git revert` the phase commit
 
 ### Tasks
 - [x] Bind jib `build` (push) to CI only; locally use `jib:dockerBuild`.
-  Done: default execution `jib-docker` (`dockerBuild`, pre-integration-test); profile `ci` adds `jib-push` (`build`, deploy phase), so CI publishes only after ITs pass. CI runs `mvn -B -Pci deploy` (was `install deploy`, which ran the build twice).
+  Done: default execution `jib-docker` (`dockerBuild`, pre-integration-test); profile `ci` adds `jib-push` (`build`, deploy phase). Since Phase 6, CI runs `mvn -B install` (all modules, all tests) and only then `mvn -B -Pci deploy -DskipTests` on pushes, so nothing is published unless every IT passed.
 - [x] Add a test that reads the YAML `OAuth2Container` generates (extract generation into a package-private method returning the map/string) — needed to test Phase 1 without Docker.
 - [x] Record baseline: dynamic-form `mvn verify` + `npm test` green against current `master`.
 
@@ -289,4 +289,16 @@ Restore `ClientConfig.java` from git; dynamic-form Phase 1 changes are harmless 
 | 3 | bd455be | — | green: oauth2-server 34 unit + 21 IT; dynamic-form backend 17 + 3 IT, frontend 47; smoke: issuer follows request host, JWKS served | green / green | 2026-10-03 |
 | 4 | 2578833 | — | green: oauth2-server 35 unit + 21 IT; dynamic-form backend 17 + 3 IT, frontend 47 | green / green | 2026-10-03 |
 | 5 | ec191de | — | green: oauth2-server 35 unit + 21 IT; dynamic-form backend 17 + 3 IT, frontend 47; dependency tree: only intended removals | green / green | 2026-10-03 |
-| 6 | (this commit) | (follows) | green: auth-server 5 unit + 5 IT, library 25 unit + 21 IT; dynamic-form backend 17 + 3 IT, frontend 47; server runtime has no Testcontainers/docker-java (deps layer 29.4 MB) | pending (first dispatched dynamic-form run expected red until its pom switch lands) | 2026-10-03 |
+| 6 | fd885b7 | 0cc826a | green: auth-server 5 unit + 5 IT, library 25 unit + 21 IT; dynamic-form backend 17 + 3 IT, frontend 47; server runtime has no Testcontainers/docker-java (deps layer 29.4 MB) | green / green (dispatched run on old pom red, as expected; push run green) | 2026-10-03 |
+| Review fixes | (this commit) | — | green: auth-server 5 + 5 IT, library 28 + 21 IT; dynamic-form backend 17 + 3 IT | pending | 2026-10-03 |
+
+### Final review follow-ups (deferred minors)
+
+- Default `frontend-client` merges into a container-defined `frontend-client` (inherits post-logout URIs and TTLs); the container CORS list replaces the default origins.
+- A plain secret that literally starts with `{noop}`/`{bcrypt}` is decoded; `upgradeEncoding` may rewrite plain values to bcrypt in memory after the first match.
+- `auth-server/src/test/resources/application.yaml` shadows the main config in `AuthServerIT` (no `tracking-modes`, no `app.cors`, no default client).
+- Library ITs depend on the image build only through module order (`mvn -T`, `-pl` run against whatever `latest` exists).
+- `withConfigFile` plus the fluent API both write `/config/application.yaml`; one wins. `ConfigFileIT` comment is wrong.
+- Public client with `client_credentials` registers but always fails with `invalid_client`.
+- Non-HTTP redirect URIs produce a CORS origin `scheme://null`.
+- dynamic-form compose: set `SPRING_SECURITY_OAUTH2_AUTHORIZATIONSERVER_ISSUER` on the `auth` service (see Phase 3).

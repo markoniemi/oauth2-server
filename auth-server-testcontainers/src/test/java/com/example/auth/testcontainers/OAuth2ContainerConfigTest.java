@@ -3,6 +3,8 @@ package com.example.auth.testcontainers;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -55,7 +57,7 @@ public class OAuth2ContainerConfigTest {
   @Test
   public void confidentialClientRequiringProofKeyWritesClientLevelSetting() throws Exception {
     OAuth2Container container = new OAuth2Container()
-        .withOAuth2Client(new Client("test-client", "test-secret").withRequireProofKey(true));
+        .withOAuth2Client(new Client("test-client", "test-secret").withRedirectUris("http://localhost:3000/callback").withRequireProofKey(true));
 
     Map<String, Object> client = clientEntry(container, "test-client");
 
@@ -67,7 +69,7 @@ public class OAuth2ContainerConfigTest {
   public void confidentialClientWithoutProofKeyDisablesItExplicitly() throws Exception {
     // Spring Authorization Server requires PKCE by default, so false must be written explicitly
     OAuth2Container container = new OAuth2Container()
-        .withOAuth2Client(new Client("test-client", "test-secret"));
+        .withOAuth2Client(new Client("test-client", "test-secret").withRedirectUris("http://localhost:3000/callback"));
 
     assertEquals(false, clientEntry(container, "test-client").get("require-proof-key"));
   }
@@ -91,7 +93,8 @@ public class OAuth2ContainerConfigTest {
   public void postLogoutRedirectUrisAreWritten() throws Exception {
     OAuth2Container container = new OAuth2Container()
         .withOAuth2Client(new Client("frontend-client", "")
-          .withPostLogoutRedirectUris("http://localhost:5173"));
+          .withRedirectUris("http://localhost:3000/callback")
+            .withPostLogoutRedirectUris("http://localhost:5173"));
 
     Map<String, Object> registration = at(clientEntry(container, "frontend-client"), "registration");
 
@@ -101,10 +104,10 @@ public class OAuth2ContainerConfigTest {
   @Test
   public void tokenTimeToLivesAreWrittenOnlyWhenSet() throws Exception {
     OAuth2Container container = new OAuth2Container()
-        .withOAuth2Client(new Client("with-ttl", "secret")
+        .withOAuth2Client(new Client("with-ttl", "secret").withRedirectUris("http://localhost:3000/callback")
           .withAccessTokenTimeToLive(Duration.ofHours(1))
           .withRefreshTokenTimeToLive(Duration.ofDays(7)))
-        .withOAuth2Client(new Client("without-ttl", "secret"));
+        .withOAuth2Client(new Client("without-ttl", "secret").withRedirectUris("http://localhost:3000/callback"));
 
     Map<String, Object> token = at(clientEntry(container, "with-ttl"), "token");
 
@@ -148,6 +151,34 @@ public class OAuth2ContainerConfigTest {
     OAuth2Container container = new OAuth2Container().withContextPath("/auth");
 
     assertEquals("/auth", container.getEnvMap().get("SERVER_SERVLET_CONTEXT_PATH"));
+  }
+
+  @Test
+  public void clientWithoutGrantTypesIsRejected() {
+    // A public client loses refresh_token, leaving no grant types for the server to register
+    OAuth2Container container = new OAuth2Container()
+        .withOAuth2Client(new Client("public-client", "").withGrantTypes("refresh_token"));
+
+    IllegalStateException e = assertThrows(IllegalStateException.class, container::generateConfigYaml);
+    assertTrue(e.getMessage().contains("public-client"), e.getMessage());
+  }
+
+  @Test
+  public void authorizationCodeClientWithoutRedirectUrisIsRejected() {
+    OAuth2Container container = new OAuth2Container()
+        .withOAuth2Client(new Client("no-redirect", "secret"));
+
+    IllegalStateException e = assertThrows(IllegalStateException.class, container::generateConfigYaml);
+    assertTrue(e.getMessage().contains("no-redirect"), e.getMessage());
+  }
+
+  @Test
+  public void clientCredentialsClientNeedsNoRedirectUris() throws Exception {
+    OAuth2Container container = new OAuth2Container()
+        .withOAuth2Client(new Client("service", "secret").withGrantTypes("client_credentials"));
+
+    assertEquals(List.of("client_credentials"),
+        at(clientEntry(container, "service"), "registration", "authorization-grant-types"));
   }
 
   private static Map<String, Object> clientEntry(OAuth2Container container, String clientId)

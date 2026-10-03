@@ -42,6 +42,8 @@ OAuth2 Authorization Server providing OpenID Connect (OIDC) discovery, JWT token
   - Chain 1: OAuth2 authorization server + OIDC (matches `/oauth2/**`, `/.well-known/**`)
   - Chain 2: API security with form login (catches all other requests)
 - Signing keys (`JWKSource`) and `AuthorizationServerSettings`: provided by Spring Boot auto-configuration; issuer from `spring.security.oauth2.authorizationserver.issuer` (unset = derived from request)
+  - With the issuer unset, the `Host` of each request decides the issuer and all advertised endpoints. Clients that reach the server under different hostnames (e.g. browser `localhost:9000`, backend `auth:9000` in docker-compose) then see different `iss` values; set `SPRING_SECURITY_OAUTH2_AUTHORIZATIONSERVER_ISSUER` in such deployments. Behind a TLS proxy also set `server.forward-headers-strategy` so the scheme is correct.
+  - Signing keys are generated at startup, so tokens do not survive a restart.
 - Clients: registered by Spring Boot from `spring.security.oauth2.authorizationserver.client.*` properties (default `frontend-client` in `application.yaml`)
 - `CorsProperties.java`: allowed CORS origins (`app.cors.allowed-origins`)
 - `SecurityProperties.java`: User configuration from `app.security.users` YAML
