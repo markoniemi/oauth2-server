@@ -15,23 +15,18 @@ This library provides a TestContainers extension that:
 
 ## Dependencies
 
-TestContainers integration is included with the OAuth2 Authorization Server library. Downstream projects should add:
+The library is published as its own artifact; it brings Testcontainers and Jackson YAML with it:
 
 ```xml
 <dependency>
-    <groupId>org.testcontainers</groupId>
-    <artifactId>testcontainers</artifactId>
-    <version>1.20.3</version>
-    <scope>test</scope>
-</dependency>
-
-<dependency>
-    <groupId>com.fasterxml.jackson.dataformat</groupId>
-    <artifactId>jackson-dataformat-yaml</artifactId>
-    <version>2.18.1</version>
+    <groupId>com.example</groupId>
+    <artifactId>auth-server-testcontainers</artifactId>
+    <version>0.1-SNAPSHOT</version>
     <scope>test</scope>
 </dependency>
 ```
+
+The server itself runs from the Docker image `ghcr.io/markoniemi/oauth2-server`; the library does not depend on server code.
 
 **Note:** OAuth2 Authorization Server upgraded to Spring Boot 4.0.3 and Spring Security 7.0. All clients must support PKCE for public client flows.
 

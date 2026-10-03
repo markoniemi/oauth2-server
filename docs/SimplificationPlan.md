@@ -266,12 +266,12 @@ Restore `ClientConfig.java` from git; dynamic-form Phase 1 changes are harmless 
 **Goal:** Stop shipping Testcontainers, Jackson YAML, and commons-io inside the server image/jar.
 
 ### Tasks
-- [ ] Multi-module build: `auth-server` (Spring Boot app, jib image) and `auth-server-testcontainers` (`OAuth2Container`, `Client`, `User`, `ServerConfig`).
-- [ ] Library must not depend on Spring Boot server code; share nothing but property names.
-- [ ] Publish both to repsy; update CI.
+- [x] Multi-module build: `auth-server` (Spring Boot app, jib image) and `auth-server-testcontainers` (`OAuth2Container`, `Client`, `User`). `ConfigFileTest` → `ConfigFileIT` (it starts containers, so it must run after the image is built).
+- [x] Library must not depend on Spring Boot server code; share nothing but property names.
+- [x] Publish both to repsy; CI unchanged (`mvn -B -Pci deploy` from the root deploys parent + both modules).
 
 ### dynamic-form changes
-- [ ] Change test dependency to `com.example:auth-server-testcontainers`.
+- [x] Change test dependency to `com.example:auth-server-testcontainers`.
 
 ### Validation
 - Standard procedure. Check image size drops (`docker images`).
@@ -288,5 +288,5 @@ Restore `ClientConfig.java` from git; dynamic-form Phase 1 changes are harmless 
 | 2 | 6d1c3c2 | — | green: oauth2-server 32 unit + 19 IT; dynamic-form backend 17 + 3 IT (FrontendIT login/logout), frontend 47; smoke: default client → login, CORS 5173 allowed / other 403 | green / green | 2026-10-03 |
 | 3 | bd455be | — | green: oauth2-server 34 unit + 21 IT; dynamic-form backend 17 + 3 IT, frontend 47; smoke: issuer follows request host, JWKS served | green / green | 2026-10-03 |
 | 4 | 2578833 | — | green: oauth2-server 35 unit + 21 IT; dynamic-form backend 17 + 3 IT, frontend 47 | green / green | 2026-10-03 |
-| 5 | (this commit) | — | green: oauth2-server 35 unit + 21 IT; dynamic-form backend 17 + 3 IT, frontend 47; dependency tree: only intended removals | pending | 2026-10-03 |
-| 6 | |  | | | |
+| 5 | ec191de | — | green: oauth2-server 35 unit + 21 IT; dynamic-form backend 17 + 3 IT, frontend 47; dependency tree: only intended removals | green / green | 2026-10-03 |
+| 6 | (this commit) | (follows) | green: auth-server 5 unit + 5 IT, library 25 unit + 21 IT; dynamic-form backend 17 + 3 IT, frontend 47; server runtime has no Testcontainers/docker-java (deps layer 29.4 MB) | pending (first dispatched dynamic-form run expected red until its pom switch lands) | 2026-10-03 |

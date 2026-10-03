@@ -43,6 +43,9 @@ A Spring Boot 4.0.3 (Spring Security 7) OAuth2 Authorization Server with:
 - **Form login** authentication
 - **Custom user/role** management via YAML or fluent API
 
+### Modules
+`auth-server` (Spring Boot app + Docker image) and `auth-server-testcontainers` (library, artifact `com.example:auth-server-testcontainers`). The library never depends on server code; they share only Spring property names.
+
 ### TestContainers Integration
 Reusable library for testing downstream applications:
 - Spin up auth server in Docker during tests

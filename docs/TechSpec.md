@@ -85,10 +85,10 @@ OAuth2 Authorization Server providing OpenID Connect (OIDC) discovery, JWT token
 
 ```bash
 # Run locally
-mvn spring-boot:run
+mvn -pl auth-server spring-boot:run
 
 # Build Docker image
-mvn package jib:dockerBuild
+mvn -pl auth-server package jib:dockerBuild
 
 # Test with Docker
 docker run -d -p 9000:9000 ghcr.io/markoniemi/oauth2-server:latest

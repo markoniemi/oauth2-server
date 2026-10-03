@@ -7,7 +7,7 @@ A Spring Boot 3.5.6 OAuth2 Authorization Server with integrated TestContainers s
 ### Run the Server
 
 ```bash
-mvn spring-boot:run
+mvn -pl auth-server spring-boot:run
 ```
 
 Server runs on `http://localhost:9000`
@@ -66,50 +66,47 @@ String authServerUrl = container.getAuthServerUrl();
 
 ## Architecture
 
+Two Maven modules under `auth-server-parent`:
+
 ```
-src/
-├── main/
-│   ├── java/com/example/auth/
-│   │   ├── config/
-│   │   │   ├── CorsProperties.java
-│   │   │   ├── SecurityConfig.java
-│   │   │   └── SecurityProperties.java
-│   │   └── testcontainers/
-│   │       ├── OAuth2Container.java
-│   │       ├── Client.java
-│   │       └── User.java
-│   └── resources/
-│       └── application.yaml
-└── test/
-    ├── java/com/example/auth/
-    │   ├── testcontainers/
-    │   │   ├── ContainerIT.java
-    │   │   ├── ContainerClientsIT.java
-    │   │   ├── ContainerConfigFileIT.java
-    │   │   └── ContainerAuthFlowIT.java
-    │   └── AuthServerIT.java
-    └── resources/
-        └── test-config.yaml
+auth-server/                         # Spring Boot app, Docker image (jib)
+├── src/main/java/com/example/auth/
+│   ├── AuthServerApplication.java
+│   └── config/
+│       ├── CorsProperties.java
+│       ├── SecurityConfig.java
+│       └── SecurityProperties.java
+├── src/main/resources/application.yaml
+└── src/test/java/com/example/auth/
+    ├── AuthServerIT.java
+    └── config/SecurityConfigTest.java
+auth-server-testcontainers/          # Testcontainers library (no server code)
+├── src/main/java/com/example/auth/testcontainers/
+│   ├── OAuth2Container.java
+│   ├── Client.java
+│   └── User.java
+├── src/test/java/com/example/auth/testcontainers/   # *IT run against the image built by auth-server
+└── src/test/resources/test-config.yaml
 ```
+
+`auth-server` is listed first in the reactor: it builds the image (`jib:dockerBuild`, pre-integration-test) that the library's integration tests start.
 
 ## Testing
 
-Run all tests:
+Run all tests (builds the local image first):
 ```bash
 mvn verify
 ```
 
-Run specific test class:
+Run one module or test class:
 ```bash
-mvn test -Dtest=ContainerIT
+mvn -pl auth-server-testcontainers verify -Dit.test=ContainerIT
 ```
 
 ### Test Coverage
 
-- **55 tests** — All passing
-  - 17 unit tests for data classes and builders
-  - 21 integration tests for complete auth server feature
-  - 17 container-specific integration tests
+- `auth-server`: 5 unit tests (users, password encoding) + 5 integration tests (auth code + PKCE, logout)
+- `auth-server-testcontainers`: 25 unit tests (generated config, `Client`, `User`) + 21 integration tests against the container
 
 ## Requirements
 

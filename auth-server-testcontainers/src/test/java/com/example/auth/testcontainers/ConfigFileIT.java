@@ -5,7 +5,7 @@ import org.testcontainers.containers.ContainerLaunchException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class ConfigFileTest {
+public class ConfigFileIT {
 
   @Test
   public void mountConfigFileFromClasspath() {
