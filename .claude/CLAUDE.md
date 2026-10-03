@@ -5,7 +5,7 @@ This document provides development guidelines for this OAuth2 Authorization Serv
 ## Quick Reference
 
 - **Start here**: [README.md](../README.md) — Project overview, quick start, and architecture
-- **Testing guide**: [OAuth2TestContainersUsage.md](../OAuth2TestContainersUsage.md) — Complete API reference for TestContainers integration
+- **Testing guide**: [OAuth2TestContainersUsage.md](../docs/OAuth2TestContainersUsage.md) — Complete API reference for TestContainers integration
 - **Tech details**: [docs/TechSpec.md](../docs/TechSpec.md) — Auth server architecture and configuration
 - **Code standards**: [.github/copilot-instructions.md](../.github/copilot-instructions.md) — Coding conventions and development standards
 
@@ -36,7 +36,7 @@ IntelliJ MCP tools are aware of the project structure, dependencies, and IDE sta
 ## Architecture Overview
 
 ### OAuth2 Authorization Server
-A Spring Boot 3.5.6 OAuth2 Authorization Server with:
+A Spring Boot 4.0.3 (Spring Security 7) OAuth2 Authorization Server with:
 - **OAuth2 Authorization Code flow** with PKCE support
 - **OpenID Connect** discovery endpoint
 - **JWT token** generation
@@ -53,13 +53,13 @@ Reusable library for testing downstream applications:
 
 ### Key Components
 
-**Container** — Main entry point. Extends `GenericContainer<Container>` to manage the Docker container lifecycle and configuration.
+**OAuth2Container** — Main entry point. Extends `GenericContainer<OAuth2Container>` to manage the Docker container lifecycle and configuration.
 
-**Client & User** — Data classes (Java records) representing registered clients and authentication users with validation.
+**Client & User** — Lombok data classes (`Client` mutable `@Data`, `User` immutable `@Value`) representing registered clients and authentication users with validation.
 
 **ServerConfig** — Configuration aggregator supporting both fluent builder and YAML file-based setup.
 
-**ContainerRegisteredClientConfig** — Spring configuration class that registers clients into the authorization server's repository.
+**ClientConfig** — Spring configuration class that registers clients into the authorization server's repository (to be replaced by Boot property-based registration, see [SimplificationPlan.md](../docs/SimplificationPlan.md)).
 
 For detailed information about coding conventions and development practices, refer to the [Copilot Instructions](../.github/copilot-instructions.md).
 
