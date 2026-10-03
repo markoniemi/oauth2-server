@@ -47,13 +47,14 @@ public class SecurityConfig {
       AuthorizationServerSettings authorizationServerSettings,
       JWKSource<SecurityContext> jwkSource)
       throws Exception {
-    http.securityMatcher("/oauth2/**", "/.well-known/**")
-        .oauth2AuthorizationServer((authorizationServer) ->
-            authorizationServer
-                .registeredClientRepository(registeredClientRepository)
-                .authorizationServerSettings(authorizationServerSettings)
-                .oidc(Customizer.withDefaults())
-        )
+    http.oauth2AuthorizationServer((authorizationServer) -> {
+          // Match all authorization server endpoints, including OIDC /connect/logout and /userinfo
+          http.securityMatcher(authorizationServer.getEndpointsMatcher());
+          authorizationServer
+              .registeredClientRepository(registeredClientRepository)
+              .authorizationServerSettings(authorizationServerSettings)
+              .oidc(Customizer.withDefaults());
+        })
         // Require an authenticated user so anonymous authorization requests trigger the login entry point
         .authorizeHttpRequests((authorize) -> authorize.anyRequest().authenticated())
         .cors(Customizer.withDefaults())

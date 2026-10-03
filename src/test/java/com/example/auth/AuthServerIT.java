@@ -83,6 +83,29 @@ public class AuthServerIT {
 
     @Test
     public void performFullAuthenticationFlow() throws Exception {
+        Map<String, Object> tokenMap = authenticateAndRequestTokens();
+
+        assertThat(tokenMap).containsKey("access_token");
+        assertThat(tokenMap).containsKey("id_token");
+        assertThat(tokenMap.get("token_type")).isEqualTo("Bearer");
+    }
+
+    @Test
+    public void performLogoutRedirectsToPostLogoutRedirectUri() throws Exception {
+        Map<String, Object> tokenMap = authenticateAndRequestTokens();
+
+        String logoutUrl = baseUrl + "/connect/logout?" +
+                "id_token_hint=" + tokenMap.get("id_token") + "&" +
+                "post_logout_redirect_uri=http://localhost:5173";
+
+        webClient.getOptions().setRedirectEnabled(false);
+        WebResponse logoutResponse = webClient.getPage(logoutUrl).getWebResponse();
+
+        assertThat(logoutResponse.getStatusCode()).isEqualTo(302);
+        assertThat(logoutResponse.getResponseHeaderValue("Location")).startsWith("http://localhost:5173");
+    }
+
+    private Map<String, Object> authenticateAndRequestTokens() throws Exception {
         String authorizationRequestUri = baseUrl + "/oauth2/authorize?" +
                 "response_type=code&" +
                 "client_id=frontend-client&" +
@@ -141,9 +164,6 @@ public class AuthServerIT {
         ObjectMapper mapper = new ObjectMapper();
         @SuppressWarnings("unchecked")
         Map<String, Object> tokenMap = mapper.readValue(tokenResponse, Map.class);
-
-        assertThat(tokenMap).containsKey("access_token");
-        assertThat(tokenMap).containsKey("id_token");
-        assertThat(tokenMap.get("token_type")).isEqualTo("Bearer");
+        return tokenMap;
     }
 }
