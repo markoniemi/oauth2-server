@@ -42,7 +42,7 @@ TestContainers integration is included with the OAuth2 Authorization Server libr
 ```java
 @BeforeAll
 static void setUp() {
-    container = new Container()
+    container = new OAuth2Container()
         .withUser("testuser", "password", "USER")
         .withUser("admin", "password", "ADMIN", "USER");
     container.start();
@@ -61,7 +61,7 @@ static void tearDown() {
 **Confidential Client (with secret):**
 
 ```java
-container = new Container()
+container = new OAuth2Container()
     .withOAuth2Client(
         new Client("client-id", "client-secret")
             .withRedirectUris("http://localhost:8080/callback")
@@ -73,13 +73,14 @@ container.start();
 **Public Client (PKCE, no secret):**
 
 ```java
-container = new Container()
+container = new OAuth2Container()
     .withOAuth2Client(
         new Client("frontend-client", "")  // Empty secret for public client
             .withRedirectUris("http://localhost:8080", "http://localhost:5173")
+            .withPostLogoutRedirectUris("http://localhost:8080", "http://localhost:5173")
             .withScopes("openid", "profile", "email")
-            .withRequireProofKey(true)  // Enable PKCE
-            // Auth method "none" is auto-set for public clients
+            .withAccessTokenTimeToLive(Duration.ofHours(1))  // Spring default is 5 minutes
+            // Public clients always get auth method "none" and PKCE; refresh_token grant is dropped
     );
 container.start();
 ```
@@ -87,7 +88,7 @@ container.start();
 **Custom Token Endpoint Auth Method:**
 
 ```java
-container = new Container()
+container = new OAuth2Container()
     .withOAuth2Client(
         new Client("backend-client", "client-secret")
             .withRedirectUris("http://localhost:8080/callback")
@@ -101,7 +102,7 @@ container.start();
 ### Custom Issuer URL and Context Path
 
 ```java
-container = new Container()
+container = new OAuth2Container()
     .withUser("testuser", "testpass", "USER")
     .withIssuerUrl("https://auth.example.com")
     .withContextPath("/auth");
@@ -113,9 +114,14 @@ String issuer = container.getIssuerUrl();   // https://auth.example.com
 
 ## API Reference
 
-### Container
+### OAuth2Container
 
 Main entry point for the TestContainers integration.
+
+**Constructors:**
+
+- `new OAuth2Container()` - Uses `ghcr.io/markoniemi/oauth2-server:latest`
+- `new OAuth2Container(DockerImageName image)` - Uses the given image, e.g. a pinned tag
 
 **Methods:**
 
@@ -149,7 +155,12 @@ new Client(String clientId, String clientSecret)
   - `"client_secret_basic"` (default for clients with secrets)
   - `"client_secret_post"` 
   - `"none"` (default for public clients)
-- `withRequireProofKey(boolean)` - Enable PKCE requirement (recommended for public clients)
+- `withRequireProofKey(boolean)` - Enable PKCE requirement for confidential clients (always on for public clients)
+- `withPostLogoutRedirectUris(String... uris)` - Allowed `post_logout_redirect_uri` values for OIDC logout
+- `withAccessTokenTimeToLive(Duration ttl)` - Access token lifetime (Spring default: 5 minutes)
+- `withRefreshTokenTimeToLive(Duration ttl)` - Refresh token lifetime (Spring default: 60 minutes)
+
+Clients are passed to the server as Spring Boot `spring.security.oauth2.authorizationserver.client.<client-id>.*` properties.
 
 ### User
 
@@ -167,7 +178,7 @@ public class OAuth2AuthenticationIT {
     
     @BeforeAll
     static void setUp() {
-        container = new Container()
+        container = new OAuth2Container()
             .withUser("user", "password", "USER")
             .withUser("admin", "password", "ADMIN")
             .withOAuth2Client(
@@ -324,7 +335,7 @@ class MyApplicationIT {
     
     @BeforeAll
     static void setup() {
-        oauth2 = new Container()
+        oauth2 = new OAuth2Container()
             .withUser("testuser", "testpass", "USER");
         oauth2.start();
     }

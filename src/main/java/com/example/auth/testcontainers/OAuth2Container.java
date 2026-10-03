@@ -2,12 +2,10 @@ package com.example.auth.testcontainers;
 
 import static java.util.Arrays.asList;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import java.io.File;
-import java.io.IOException;
 import java.time.Duration;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -16,6 +14,7 @@ import java.util.Map;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.utility.DockerImageName;
+import org.testcontainers.images.builder.Transferable;
 import org.testcontainers.utility.MountableFile;
 
 public class OAuth2Container extends GenericContainer<OAuth2Container> {
@@ -28,7 +27,12 @@ public class OAuth2Container extends GenericContainer<OAuth2Container> {
     private String issuerUrl;
 
     public OAuth2Container() {
-        super(DockerImageName.parse(IMAGE_NAME));
+        this(DockerImageName.parse(IMAGE_NAME));
+    }
+
+    /** Uses the given image, e.g. to pin a released tag instead of {@code latest}. */
+    public OAuth2Container(DockerImageName image) {
+        super(image);
         withExposedPorts(AUTH_SERVER_PORT);
         waitingFor(Wait.forHttp("/actuator/health")
             .forStatusCode(200)
@@ -78,42 +82,17 @@ public class OAuth2Container extends GenericContainer<OAuth2Container> {
 
     @Override
     protected void configure() {
-        try {
-            generateAndMountConfigYaml();
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to configure container", e);
-        }
-    }
-
-    private void generateAndMountConfigYaml() throws IOException {
         String yaml = generateConfigYaml();
-        if (yaml == null) {
-            return;
+        if (yaml != null) {
+            withCopyToContainer(Transferable.of(yaml), "/config/application.yaml");
         }
-
-        File tempDir = Files.createTempDirectory("oauth2-config-").toFile();
-        File configFile = new File(tempDir, "application.yaml");
-        Files.writeString(configFile.toPath(), yaml);
-
-        withCopyFileToContainer(
-            MountableFile.forHostPath(configFile.getAbsolutePath()),
-            "/config/application.yaml");
-
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            try {
-                Files.delete(configFile.toPath());
-                Files.delete(tempDir.toPath());
-            } catch (IOException e) {
-                // Ignore cleanup errors
-            }
-        }));
     }
 
     /**
      * Builds the Spring configuration mounted into the container, or {@code null} when there is
      * nothing to configure.
      */
-    String generateConfigYaml() throws IOException {
+    String generateConfigYaml() {
         if (users.isEmpty() && clients.isEmpty()) {
             return null;
         }
@@ -139,25 +118,7 @@ public class OAuth2Container extends GenericContainer<OAuth2Container> {
         if (!clients.isEmpty()) {
             Map<String, Object> clientsMap = new LinkedHashMap<>();
             for (Client client : clients) {
-                Map<String, Object> registration = new LinkedHashMap<>();
-                registration.put("client-id", client.getClientId());
-                if (client.getClientSecret() != null && !client.getClientSecret().isEmpty()) {
-                    registration.put("client-secret", client.getClientSecret());
-                }
-                registration.put("client-authentication-methods", List.of(client.getTokenEndpointAuthMethod()));
-                registration.put("authorization-grant-types", new ArrayList<>(client.getGrantTypes()));
-                registration.put("redirect-uris", new ArrayList<>(client.getRedirectUris()));
-                registration.put("scopes", new ArrayList<>(client.getScopes()));
-
-                if (client.isRequireProofKey()) {
-                    Map<String, Object> clientSettings = new LinkedHashMap<>();
-                    clientSettings.put("require-proof-key", true);
-                    registration.put("client-settings", clientSettings);
-                }
-
-                Map<String, Object> clientEntry = new LinkedHashMap<>();
-                clientEntry.put("registration", registration);
-                clientsMap.put(client.getClientId(), clientEntry);
+                clientsMap.put(client.getClientId(), toClientProperties(client));
             }
 
             Map<String, Object> authserverMap = new LinkedHashMap<>();
@@ -171,6 +132,53 @@ public class OAuth2Container extends GenericContainer<OAuth2Container> {
             root.put("spring", springMap);
         }
 
-        return new ObjectMapper(new YAMLFactory()).writeValueAsString(root);
+        try {
+            return new ObjectMapper(new YAMLFactory()).writeValueAsString(root);
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("Failed to generate container configuration", e);
+        }
+    }
+
+    /** Maps a client to Spring Boot's {@code spring.security.oauth2.authorizationserver.client.<id>} properties. */
+    private static Map<String, Object> toClientProperties(Client client) {
+        boolean publicClient = client.isPublicClient();
+
+        List<String> grantTypes = new ArrayList<>(client.getGrantTypes());
+        if (publicClient) {
+            // The authorization server never issues refresh tokens to public clients
+            grantTypes.remove("refresh_token");
+        }
+
+        Map<String, Object> registration = new LinkedHashMap<>();
+        registration.put("client-id", client.getClientId());
+        if (!publicClient) {
+            registration.put("client-secret", client.getClientSecret());
+        }
+        registration.put("client-authentication-methods",
+            List.of(publicClient ? "none" : client.getTokenEndpointAuthMethod()));
+        registration.put("authorization-grant-types", grantTypes);
+        registration.put("redirect-uris", new ArrayList<>(client.getRedirectUris()));
+        if (!client.getPostLogoutRedirectUris().isEmpty()) {
+            registration.put("post-logout-redirect-uris", new ArrayList<>(client.getPostLogoutRedirectUris()));
+        }
+        registration.put("scopes", new ArrayList<>(client.getScopes()));
+
+        Map<String, Object> properties = new LinkedHashMap<>();
+        properties.put("registration", registration);
+        if (client.isRequireProofKey() || publicClient) {
+            properties.put("require-proof-key", true);
+        }
+
+        Map<String, Object> token = new LinkedHashMap<>();
+        if (client.getAccessTokenTimeToLive() != null) {
+            token.put("access-token-time-to-live", client.getAccessTokenTimeToLive().toString());
+        }
+        if (client.getRefreshTokenTimeToLive() != null) {
+            token.put("refresh-token-time-to-live", client.getRefreshTokenTimeToLive().toString());
+        }
+        if (!token.isEmpty()) {
+            properties.put("token", token);
+        }
+        return properties;
     }
 }

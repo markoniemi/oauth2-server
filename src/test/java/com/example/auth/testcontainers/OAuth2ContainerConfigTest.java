@@ -1,10 +1,12 @@
 package com.example.auth.testcontainers;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
@@ -47,6 +49,72 @@ public class OAuth2ContainerConfigTest {
         assertEquals(List.of("authorization_code"), registration.get("authorization-grant-types"));
         assertEquals(List.of("http://localhost:3000/callback"), registration.get("redirect-uris"));
         assertEquals(List.of("openid"), registration.get("scopes"));
+    }
+
+    @Test
+    public void confidentialClientRequiringProofKeyWritesClientLevelSetting() throws Exception {
+        OAuth2Container container = new OAuth2Container()
+            .withOAuth2Client(new Client("test-client", "test-secret").withRequireProofKey(true));
+
+        Map<String, Object> client = clientEntry(container, "test-client");
+
+        assertEquals(true, client.get("require-proof-key"));
+        assertFalse(((Map<?, ?>) client.get("registration")).containsKey("client-settings"));
+    }
+
+    @Test
+    public void confidentialClientWithoutProofKeyOmitsSetting() throws Exception {
+        OAuth2Container container = new OAuth2Container()
+            .withOAuth2Client(new Client("test-client", "test-secret"));
+
+        assertFalse(clientEntry(container, "test-client").containsKey("require-proof-key"));
+    }
+
+    @Test
+    public void publicClientUsesNoneAuthenticationAndRequiresProofKey() throws Exception {
+        OAuth2Container container = new OAuth2Container()
+            .withOAuth2Client(new Client("frontend-client", "")
+                .withRedirectUris("http://localhost:5173"));
+
+        Map<String, Object> client = clientEntry(container, "frontend-client");
+        Map<String, Object> registration = at(client, "registration");
+
+        assertEquals(true, client.get("require-proof-key"));
+        assertEquals(List.of("none"), registration.get("client-authentication-methods"));
+        assertFalse(registration.containsKey("client-secret"));
+        assertEquals(List.of("authorization_code"), registration.get("authorization-grant-types"));
+    }
+
+    @Test
+    public void postLogoutRedirectUrisAreWritten() throws Exception {
+        OAuth2Container container = new OAuth2Container()
+            .withOAuth2Client(new Client("frontend-client", "")
+                .withPostLogoutRedirectUris("http://localhost:5173"));
+
+        Map<String, Object> registration = at(clientEntry(container, "frontend-client"), "registration");
+
+        assertEquals(List.of("http://localhost:5173"), registration.get("post-logout-redirect-uris"));
+    }
+
+    @Test
+    public void tokenTimeToLivesAreWrittenOnlyWhenSet() throws Exception {
+        OAuth2Container container = new OAuth2Container()
+            .withOAuth2Client(new Client("with-ttl", "secret")
+                .withAccessTokenTimeToLive(Duration.ofHours(1))
+                .withRefreshTokenTimeToLive(Duration.ofDays(7)))
+            .withOAuth2Client(new Client("without-ttl", "secret"));
+
+        Map<String, Object> token = at(clientEntry(container, "with-ttl"), "token");
+
+        assertEquals("PT1H", token.get("access-token-time-to-live"));
+        assertEquals("PT168H", token.get("refresh-token-time-to-live"));
+        assertFalse(clientEntry(container, "without-ttl").containsKey("token"));
+    }
+
+    private static Map<String, Object> clientEntry(OAuth2Container container, String clientId)
+        throws Exception {
+        return at(parse(container.generateConfigYaml()),
+            "spring", "security", "oauth2", "authorizationserver", "client", clientId);
     }
 
     private static Map<String, Object> parse(String yaml) throws Exception {

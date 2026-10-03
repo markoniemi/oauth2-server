@@ -139,18 +139,18 @@ Revert pom/workflow changes.
 **Goal:** Make `OAuth2Container` produce Boot-correct client properties. Safe to ship first because the server still ignores them (F1), so dynamic-form behavior cannot change yet.
 
 ### Tasks
-- [ ] F4: write `require-proof-key` at `client.<id>.require-proof-key`, not under `registration`.
-- [ ] F6: when secret is null/blank, write `client-authentication-methods: [none]` and force `require-proof-key: true`; omit `refresh_token` grant for public clients (Authorization Server never issues refresh tokens to them).
-- [ ] F5: add `Client.withPostLogoutRedirectUris(String...)` → `registration.post-logout-redirect-uris`.
-- [ ] Add optional `Client.withAccessTokenTimeToLive(Duration)` / `withRefreshTokenTimeToLive(Duration)` → `client.<id>.token.*` (Boot defaults are 5 min / 60 min; current hard-coded default client uses 1 h / 7 d).
-- [ ] Map grant types / auth methods via `AuthorizationGrantType` / `ClientAuthenticationMethod` values instead of raw strings.
-- [ ] Replace temp file + shutdown hook with `withCopyToContainer(Transferable.of(yaml), "/config/application.yaml")`.
-- [ ] Add constructor `OAuth2Container(DockerImageName)` so consumers can pin a tag instead of `latest`.
-- [ ] Unit tests on generated YAML for: confidential client, public PKCE client, post-logout URIs, TTLs.
-- [ ] Update `docs/OAuth2TestContainersUsage.md`.
+- [x] F4: write `require-proof-key` at `client.<id>.require-proof-key`, not under `registration`.
+- [x] F6: when secret is null/blank, write `client-authentication-methods: [none]` and force `require-proof-key: true`; omit `refresh_token` grant for public clients (Authorization Server never issues refresh tokens to them).
+- [x] F5: add `Client.withPostLogoutRedirectUris(String...)` → `registration.post-logout-redirect-uris`.
+- [x] Add optional `Client.withAccessTokenTimeToLive(Duration)` / `withRefreshTokenTimeToLive(Duration)` → `client.<id>.token.*` (Boot defaults are 5 min / 60 min; current hard-coded default client uses 1 h / 7 d).
+- [-] ~~Map grant types / auth methods via `AuthorizationGrantType` / `ClientAuthenticationMethod` values~~ — skipped: Boot properties are strings, and Phase 6 wants the library free of Spring Security types.
+- [x] Replace temp file + shutdown hook with `withCopyToContainer(Transferable.of(yaml), "/config/application.yaml")`.
+- [x] Add constructor `OAuth2Container(DockerImageName)` so consumers can pin a tag instead of `latest`.
+- [x] Unit tests on generated YAML for: confidential client, public PKCE client, post-logout URIs, TTLs.
+- [x] Update `docs/OAuth2TestContainersUsage.md` (also fixed stale `new Container()` examples).
 
 ### dynamic-form changes
-- [ ] `TestcontainersConfig`: add `.withPostLogoutRedirectUris("http://localhost:8080", "http://localhost:5173")` and `.withAccessTokenTimeToLive(Duration.ofHours(1))` to `frontend-client`. **Required before Phase 2**, otherwise logout and token lifetime break once clients are honored.
+- [x] `TestcontainersConfig`: add `.withPostLogoutRedirectUris("http://localhost:8080", "http://localhost:5173")` and `.withAccessTokenTimeToLive(Duration.ofHours(1))` to `frontend-client`. **Required before Phase 2**, otherwise logout and token lifetime break once clients are honored.
 
 ### Validation
 - Standard procedure. Expect no behavior difference (server still uses hard-coded client).
@@ -281,8 +281,8 @@ Restore `ClientConfig.java` from git; dynamic-form Phase 1 changes are harmless 
 | Phase | oauth2-server commit | dynamic-form commit | Local validation | CI (oauth2-server / dynamic-form) | Date |
 |-------|----------------------|---------------------|------------------|-----------------------------------|------|
 | Pre | 50e6c44 | — | n/a (docs/config only) | green / green | 2026-10-03 |
-| 0 | (this commit) | — | green: oauth2-server 25 unit + 19 IT; dynamic-form backend 17 + 3 IT, frontend 47 | pending | 2026-10-03 |
-| 1 | |  | | | |
+| 0 | dfbdc7a, 8ad78d8 (CI fix) | — | green: oauth2-server 25 unit + 19 IT; dynamic-form backend 17 + 3 IT, frontend 47 | red → fixed by 8ad78d8; green / green | 2026-10-03 |
+| 1 | (this commit) | (follows) | green: oauth2-server 30 unit + 19 IT; dynamic-form backend 17 + 3 IT, frontend 47 | pending | 2026-10-03 |
 | 2 | |  | | | |
 | 3 | |  | | | |
 | 4 | |  | | | |
