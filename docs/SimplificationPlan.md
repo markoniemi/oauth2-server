@@ -301,4 +301,4 @@ Restore `ClientConfig.java` from git; dynamic-form Phase 1 changes are harmless 
 - `withConfigFile` plus the fluent API both write `/config/application.yaml`; one wins. `ConfigFileIT` comment is wrong.
 - Public client with `client_credentials` registers but always fails with `invalid_client`.
 - Non-HTTP redirect URIs produce a CORS origin `scheme://null`.
-- dynamic-form compose: set `SPRING_SECURITY_OAUTH2_AUTHORIZATIONSERVER_ISSUER` on the `auth` service (see Phase 3).
+- ~~dynamic-form compose: set `SPRING_SECURITY_OAUTH2_AUTHORIZATIONSERVER_ISSUER` on the `auth` service (see Phase 3).~~ Done in dynamic-form (fixed issuer, JWKS via `auth:9000`, demo users, no curl healthcheck); verified login → API → logout in a browser.
