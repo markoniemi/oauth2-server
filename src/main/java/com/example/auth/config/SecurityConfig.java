@@ -54,6 +54,8 @@ public class SecurityConfig {
                 .authorizationServerSettings(authorizationServerSettings)
                 .oidc(Customizer.withDefaults())
         )
+        // Require an authenticated user so anonymous authorization requests trigger the login entry point
+        .authorizeHttpRequests((authorize) -> authorize.anyRequest().authenticated())
         .cors(Customizer.withDefaults())
         // Redirect to the login page when not authenticated from the authorization endpoint
         .exceptionHandling(

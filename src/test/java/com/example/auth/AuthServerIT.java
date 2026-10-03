@@ -12,24 +12,18 @@ import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
 /**
  * Integration tests for OAuth2 authorization server.
- *
- * NOTE: These tests are disabled in Spring Boot 4.0+ due to MockMvc auto-configuration
- * limitations with webEnvironment=RANDOM_PORT. The functionality is validated through:
- * - Unit tests (10/10 passing)
- * - Manual testing with curl and Docker container
- * - Integration tests via TestContainers (in downstream projects like dynamic-form)
- *
- * To run these tests manually:
- * 1. Start the app: mvn spring-boot:run
- * 2. Run tests with: mvn test -Dtest=AuthServerIT (after enabling @Test methods)
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class AuthServerIT {
@@ -55,21 +49,18 @@ public class AuthServerIT {
     }
 
     @Test
-    @Disabled("Spring Boot 4.0 MockMvc auto-config limitation with RANDOM_PORT")
     public void performHealthCheck() throws Exception {
         Page response = webClient.getPage(baseUrl + "/actuator/health");
         assertThat(response.getWebResponse().getStatusCode()).isEqualTo(200);
     }
 
     @Test
-    @Disabled("Spring Boot 4.0 MockMvc auto-config limitation with RANDOM_PORT")
     public void performDiscoveryCheck() throws Exception {
         Page response = webClient.getPage(baseUrl + "/.well-known/openid-configuration");
         assertThat(response.getWebResponse().getStatusCode()).isEqualTo(200);
     }
 
     @Test
-    @Disabled("Spring Boot 4.0 MockMvc auto-config limitation with RANDOM_PORT")
     public void performAuthorizationRequestRedirectsToLogin() throws Exception {
         String authUrl = baseUrl + "/oauth2/authorize?" +
                 "response_type=code&" +
@@ -77,6 +68,7 @@ public class AuthServerIT {
                 "scope=openid&" +
                 "redirect_uri=http://localhost:5173&" +
                 "state=state&" +
+                "nonce=nonce123&" +
                 "code_challenge=" + codeChallenge + "&" +
                 "code_challenge_method=S256";
 
@@ -90,7 +82,6 @@ public class AuthServerIT {
     }
 
     @Test
-    @Disabled("Spring Boot 4.0 MockMvc auto-config limitation with RANDOM_PORT")
     public void performFullAuthenticationFlow() throws Exception {
         String authorizationRequestUri = baseUrl + "/oauth2/authorize?" +
                 "response_type=code&" +
@@ -98,6 +89,7 @@ public class AuthServerIT {
                 "scope=openid&" +
                 "redirect_uri=http://localhost:5173&" +
                 "state=state&" +
+                "nonce=nonce123&" +
                 "code_challenge=" + codeChallenge + "&" +
                 "code_challenge_method=S256";
 
@@ -135,14 +127,19 @@ public class AuthServerIT {
         }
 
         RestTemplate restTemplate = new RestTemplate();
-        String tokenUrl = baseUrl + "/oauth2/token?grant_type=authorization_code&" +
-                "code=" + code + "&" +
-                "redirect_uri=http://localhost:5173&" +
-                "client_id=frontend-client&" +
-                "code_verifier=" + codeVerifier;
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+        MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
+        form.add("grant_type", "authorization_code");
+        form.add("code", code);
+        form.add("redirect_uri", "http://localhost:5173");
+        form.add("client_id", "frontend-client");
+        form.add("code_verifier", codeVerifier);
 
-        String tokenResponse = restTemplate.postForObject(tokenUrl, null, String.class);
+        String tokenResponse = restTemplate.postForObject(baseUrl + "/oauth2/token",
+                new HttpEntity<>(form, headers), String.class);
         ObjectMapper mapper = new ObjectMapper();
+        @SuppressWarnings("unchecked")
         Map<String, Object> tokenMap = mapper.readValue(tokenResponse, Map.class);
 
         assertThat(tokenMap).containsKey("access_token");
