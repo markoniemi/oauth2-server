@@ -5,12 +5,15 @@ import static java.util.Arrays.asList;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import java.net.URI;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.utility.DockerImageName;
@@ -98,6 +101,7 @@ public class OAuth2Container extends GenericContainer<OAuth2Container> {
         }
 
         Map<String, Object> root = new LinkedHashMap<>();
+        Map<String, Object> appMap = new LinkedHashMap<>();
 
         if (!users.isEmpty()) {
             List<Map<String, Object>> usersList = new ArrayList<>();
@@ -110,12 +114,11 @@ public class OAuth2Container extends GenericContainer<OAuth2Container> {
             }
             Map<String, Object> securityMap = new LinkedHashMap<>();
             securityMap.put("users", usersList);
-            Map<String, Object> appMap = new LinkedHashMap<>();
             appMap.put("security", securityMap);
-            root.put("app", appMap);
         }
 
         if (!clients.isEmpty()) {
+            appMap.put("cors", Map.of("allowed-origins", corsOrigins()));
             Map<String, Object> clientsMap = new LinkedHashMap<>();
             for (Client client : clients) {
                 clientsMap.put(client.getClientId(), toClientProperties(client));
@@ -132,11 +135,29 @@ public class OAuth2Container extends GenericContainer<OAuth2Container> {
             root.put("spring", springMap);
         }
 
+        if (!appMap.isEmpty()) {
+            root.put("app", appMap);
+        }
+
         try {
             return new ObjectMapper(new YAMLFactory()).writeValueAsString(root);
         } catch (JsonProcessingException e) {
             throw new IllegalStateException("Failed to generate container configuration", e);
         }
+    }
+
+    /** Origins (scheme://host:port) of all client redirect URIs, so browser apps can call the server. */
+    private List<String> corsOrigins() {
+        Set<String> origins = new LinkedHashSet<>();
+        for (Client client : clients) {
+            List<String> uris = new ArrayList<>(client.getRedirectUris());
+            uris.addAll(client.getPostLogoutRedirectUris());
+            for (String uri : uris) {
+                URI parsed = URI.create(uri);
+                origins.add(parsed.getScheme() + "://" + parsed.getAuthority());
+            }
+        }
+        return new ArrayList<>(origins);
     }
 
     /** Maps a client to Spring Boot's {@code spring.security.oauth2.authorizationserver.client.<id>} properties. */
@@ -165,9 +186,8 @@ public class OAuth2Container extends GenericContainer<OAuth2Container> {
 
         Map<String, Object> properties = new LinkedHashMap<>();
         properties.put("registration", registration);
-        if (client.isRequireProofKey() || publicClient) {
-            properties.put("require-proof-key", true);
-        }
+        // Always explicit: Spring Authorization Server requires PKCE unless told otherwise
+        properties.put("require-proof-key", client.isRequireProofKey() || publicClient);
 
         Map<String, Object> token = new LinkedHashMap<>();
         if (client.getAccessTokenTimeToLive() != null) {

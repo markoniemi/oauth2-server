@@ -62,16 +62,15 @@ src/
 ├── main/
 │   ├── java/com/example/auth/
 │   │   ├── config/
-│   │   │   ├── AuthorizationServerConfig.java
+│   │   │   ├── CorsProperties.java
+│   │   │   ├── OAuth2AuthServerConfig.java
 │   │   │   ├── SecurityConfig.java
 │   │   │   └── SecurityProperties.java
-│   │   ├── testcontainers/
-│   │   │   ├── Container.java
-│   │   │   ├── Client.java
-│   │   │   ├── User.java
-│   │   │   ├── ServerConfig.java
-│   │   │   └── ContainerRegisteredClientConfig.java
-│   │   └── controller/
+│   │   └── testcontainers/
+│   │       ├── OAuth2Container.java
+│   │       ├── Client.java
+│   │       ├── User.java
+│   │       └── ServerConfig.java
 │   └── resources/
 │       └── application.yaml
 └── test/

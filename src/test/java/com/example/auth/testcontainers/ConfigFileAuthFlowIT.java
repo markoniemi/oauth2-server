@@ -81,6 +81,14 @@ public class ConfigFileAuthFlowIT {
 
         // Should redirect (302) back to authorization endpoint
         assertEquals(302, responseAfterLogin.getStatusCode());
+
+        // Authorization endpoint issues a code to the registered redirect URI of config-client
+        var authorizationResponse = webClient.getPage(responseAfterLogin.getResponseHeaderValue("Location"))
+            .getWebResponse();
+        assertEquals(302, authorizationResponse.getStatusCode());
+        String callback = authorizationResponse.getResponseHeaderValue("Location");
+        assertTrue(callback.startsWith("http://localhost:3000/callback"), callback);
+        assertTrue(callback.contains("code="), callback);
     }
 
     @Test
@@ -92,22 +100,16 @@ public class ConfigFileAuthFlowIT {
         String credentials = "config-client:client-secret-123";
         String encodedCredentials = Base64.getEncoder().encodeToString(credentials.getBytes());
 
-        try {
-            var tokenResponse = restClient.post()
-                .uri(baseUrl + "/oauth2/token")
-                .header("Authorization", "Basic " + encodedCredentials)
-                .header("Content-Type", "application/x-www-form-urlencoded")
-                .body("grant_type=client_credentials&scope=openid")
-                .retrieve()
-                .toEntity(Map.class);
+        var tokenResponse = restClient.post()
+            .uri(baseUrl + "/oauth2/token")
+            .header("Authorization", "Basic " + encodedCredentials)
+            .header("Content-Type", "application/x-www-form-urlencoded")
+            .body("grant_type=client_credentials")
+            .retrieve()
+            .toEntity(Map.class);
 
-            // Verify token endpoint is reachable with config-client
-            assertTrue(tokenResponse.getStatusCode().is2xxSuccessful() ||
-                tokenResponse.getStatusCode().is4xxClientError());
-        } catch (Exception e) {
-            // Network issues acceptable in test environment
-            assertTrue(container.isRunning());
-        }
+        assertEquals(200, tokenResponse.getStatusCode().value());
+        assertNotNull(tokenResponse.getBody().get("access_token"));
     }
 
     @Test

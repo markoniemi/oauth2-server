@@ -4,7 +4,10 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
+import java.net.HttpURLConnection;
 import java.util.Base64;
 import java.util.Map;
 
@@ -21,7 +24,8 @@ public class ContainerClientsIT {
             .withOAuth2Client(
                 new Client("test-client", "test-secret")
                     .withRedirectUris("http://localhost:8080/callback")
-                    .withScopes("openid", "profile")
+                    .withScopes("openid", "profile", "api")
+                    .withGrantTypes("authorization_code", "client_credentials")
             );
         container.start();
     }
@@ -37,56 +41,51 @@ public class ContainerClientsIT {
     public void clientCanObtainTokenViaClientCredentials() {
         RestClient restClient = RestClient.create();
         String tokenUrl = container.getAuthServerUrl() + "/oauth2/token";
+        String encodedCredentials = Base64.getEncoder().encodeToString("test-client:test-secret".getBytes());
 
-        // Prepare basic auth header
-        String credentials = "test-client:test-secret";
-        String encodedCredentials = Base64.getEncoder().encodeToString(credentials.getBytes());
+        var response = restClient.post()
+            .uri(tokenUrl)
+            .header(HttpHeaders.AUTHORIZATION, "Basic " + encodedCredentials)
+            .header(HttpHeaders.CONTENT_TYPE, "application/x-www-form-urlencoded")
+            .body("grant_type=client_credentials&scope=api")
+            .retrieve()
+            .toEntity(Map.class);
 
-        try {
-            var response = restClient.post()
-                .uri(tokenUrl)
-                .header(HttpHeaders.AUTHORIZATION, "Basic " + encodedCredentials)
-                .header(HttpHeaders.CONTENT_TYPE, "application/x-www-form-urlencoded")
-                .body("grant_type=client_credentials&scope=openid")
-                .retrieve()
-                .toEntity(Map.class);
-
-            // May not support client_credentials in default config, but endpoint should be reachable
-            assertTrue(response.getStatusCode().is2xxSuccessful() || response.getStatusCode().is4xxClientError());
-        } catch (Exception e) {
-            // Network issues are acceptable in test environment
-            assertTrue(container.isRunning());
-        }
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody().get("access_token"));
     }
 
     @Test
-    public void authorizationEndpointIsAccessible() {
-        RestClient restClient = RestClient.create();
-        String authUrl = container.getAuthServerUrl() + "/oauth2/authorize";
+    public void authorizationRequestForRegisteredClientRedirectsToLogin() {
+        RestClient restClient = RestClient.builder()
+            .requestFactory(new NoRedirectRequestFactory())
+            .build();
+        String authUrl = container.getAuthServerUrl() + "/oauth2/authorize"
+            + "?client_id=test-client&response_type=code&scope=openid"
+            + "&redirect_uri=http://localhost:8080/callback";
 
-        try {
-            var response = restClient.get()
-                .uri(uriBuilder -> uriBuilder
-                    .path(authUrl)
-                    .queryParam("client_id", "test-client")
-                    .queryParam("response_type", "code")
-                    .queryParam("scope", "openid")
-                    .queryParam("redirect_uri", "http://localhost:8080/callback")
-                    .build())
-                .retrieve()
-                .toEntity(String.class);
+        var response = restClient.get()
+            .uri(authUrl)
+            .header(HttpHeaders.ACCEPT, "text/html")
+            .retrieve()
+            .toBodilessEntity();
 
-            // Should redirect to login or return auth page
-            assertTrue(response.getStatusCode().is3xxRedirection() || response.getStatusCode().is2xxSuccessful());
-        } catch (Exception e) {
-            // Network issues; at least verify container is running
-            assertTrue(container.isRunning());
-        }
+        assertEquals(HttpStatus.FOUND, response.getStatusCode());
+        String location = String.valueOf(response.getHeaders().getLocation());
+        assertTrue(location.endsWith("/login"), location);
     }
 
     @Test
     public void containerIsRunningWithClient() {
         assertTrue(container.isRunning());
         assertNotNull(container.getAuthServerUrl());
+    }
+
+    private static class NoRedirectRequestFactory extends SimpleClientHttpRequestFactory {
+        @Override
+        protected void prepareConnection(HttpURLConnection connection, String httpMethod) throws java.io.IOException {
+            super.prepareConnection(connection, httpMethod);
+            connection.setInstanceFollowRedirects(false);
+        }
     }
 }

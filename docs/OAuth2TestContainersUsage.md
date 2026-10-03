@@ -155,7 +155,7 @@ new Client(String clientId, String clientSecret)
   - `"client_secret_basic"` (default for clients with secrets)
   - `"client_secret_post"` 
   - `"none"` (default for public clients)
-- `withRequireProofKey(boolean)` - Enable PKCE requirement for confidential clients (always on for public clients)
+- `withRequireProofKey(boolean)` - Require PKCE for a confidential client (default `false`; always on for public clients). Written explicitly because Spring Authorization Server otherwise requires PKCE for every client
 - `withPostLogoutRedirectUris(String... uris)` - Allowed `post_logout_redirect_uri` values for OIDC logout
 - `withAccessTokenTimeToLive(Duration ttl)` - Access token lifetime (Spring default: 5 minutes)
 - `withRefreshTokenTimeToLive(Duration ttl)` - Refresh token lifetime (Spring default: 60 minutes)

@@ -162,8 +162,8 @@ Revert pom/workflow changes.
 **Goal:** Delete `ClientConfig`; clients come only from `spring.security.oauth2.authorizationserver.client.*`.
 
 ### Tasks
-- [ ] Delete `ClientConfig` (static state, string mapping, hard-coded client).
-- [ ] Move the default `frontend-client` into `src/main/resources/application.yaml`:
+- [x] Delete `ClientConfig` (static state, string mapping, hard-coded client).
+- [x] Move the default `frontend-client` into `src/main/resources/application.yaml`:
   ```yaml
   spring:
     security:
@@ -183,13 +183,14 @@ Revert pom/workflow changes.
                 access-token-time-to-live: 1h
                 refresh-token-time-to-live: 7d
   ```
-- [ ] **Decide:** default client and container-provided clients are merged by Spring's property binding (map keys merge; a container `frontend-client` overrides list fields but inherits unset ones such as TTLs). Options:
+- [x] **Decided: (a)** default client and container-provided clients are merged by Spring's property binding (map keys merge; a container `frontend-client` overrides list fields but inherits unset ones such as TTLs). Options:
   - (a) Accept and document merge semantics. *(Recommended — matches current dynamic-form expectations.)*
   - (b) Move the default client to a profile (e.g. `application-demo.yaml`) and enable it in `docker-compose.yaml` via `SPRING_PROFILES_ACTIVE=demo`.
-- [ ] F7: replace `ClientConfig`-based CORS with `@ConfigurationProperties` `app.cors.allowed-origins` (default `http://localhost:8080, http://localhost:5173`). Container: add `withCorsAllowedOrigins(...)` or derive from client redirect URIs when generating YAML.
-- [ ] Remove `registeredClientRepository(...)` from `SecurityConfig` configurer call (configurer finds the bean).
-- [ ] F9: tighten ITs — `client_credentials` must return 200 with `access_token`; config-file client must be able to complete the authorization code flow.
-- [ ] Remove `spring.config.import: optional:classpath:/config/application.yaml` if confirmed unused (container mounts file at `./config/`, which Boot reads by default).
+- [x] F7: replace `ClientConfig`-based CORS with `@ConfigurationProperties` `app.cors.allowed-origins` (default `http://localhost:8080, http://localhost:5173`). Container: add `withCorsAllowedOrigins(...)` or derive from client redirect URIs when generating YAML.
+- [x] Remove `registeredClientRepository(...)` from `SecurityConfig` configurer call (configurer finds the bean).
+- [x] F9: tighten ITs — `client_credentials` must return 200 with `access_token`; config-file client must be able to complete the authorization code flow.
+- [x] **Found during Phase 2:** Spring Authorization Server (Boot 4) requires PKCE by default for *all* clients. `OAuth2Container` now always writes `require-proof-key` explicitly (`false` for confidential clients unless `withRequireProofKey(true)`), preserving the `Client` API default.
+- [x] Remove `spring.config.import: optional:classpath:/config/application.yaml` — confirmed unused (ConfigFileAuthFlowIT passes without it) (container mounts file at `./config/`, which Boot reads by default).
 
 ### Validation
 - Standard procedure, with emphasis on:
@@ -282,8 +283,8 @@ Restore `ClientConfig.java` from git; dynamic-form Phase 1 changes are harmless 
 |-------|----------------------|---------------------|------------------|-----------------------------------|------|
 | Pre | 50e6c44 | — | n/a (docs/config only) | green / green | 2026-10-03 |
 | 0 | dfbdc7a, 8ad78d8 (CI fix) | — | green: oauth2-server 25 unit + 19 IT; dynamic-form backend 17 + 3 IT, frontend 47 | red → fixed by 8ad78d8; green / green | 2026-10-03 |
-| 1 | (this commit) | (follows) | green: oauth2-server 30 unit + 19 IT; dynamic-form backend 17 + 3 IT, frontend 47 | pending | 2026-10-03 |
-| 2 | |  | | | |
+| 1 | 8c61b3e | b7393e9 | green: oauth2-server 30 unit + 19 IT; dynamic-form backend 17 + 3 IT, frontend 47 | green / green | 2026-10-03 |
+| 2 | (this commit) | — | green: oauth2-server 32 unit + 19 IT; dynamic-form backend 17 + 3 IT (FrontendIT login/logout), frontend 47; smoke: default client → login, CORS 5173 allowed / other 403 | pending | 2026-10-03 |
 | 3 | |  | | | |
 | 4 | |  | | | |
 | 5 | |  | | | |

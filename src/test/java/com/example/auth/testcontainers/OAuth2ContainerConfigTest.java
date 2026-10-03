@@ -9,6 +9,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 public class OAuth2ContainerConfigTest {
@@ -63,11 +64,12 @@ public class OAuth2ContainerConfigTest {
     }
 
     @Test
-    public void confidentialClientWithoutProofKeyOmitsSetting() throws Exception {
+    public void confidentialClientWithoutProofKeyDisablesItExplicitly() throws Exception {
+        // Spring Authorization Server requires PKCE by default, so false must be written explicitly
         OAuth2Container container = new OAuth2Container()
             .withOAuth2Client(new Client("test-client", "test-secret"));
 
-        assertFalse(clientEntry(container, "test-client").containsKey("require-proof-key"));
+        assertEquals(false, clientEntry(container, "test-client").get("require-proof-key"));
     }
 
     @Test
@@ -109,6 +111,27 @@ public class OAuth2ContainerConfigTest {
         assertEquals("PT1H", token.get("access-token-time-to-live"));
         assertEquals("PT168H", token.get("refresh-token-time-to-live"));
         assertFalse(clientEntry(container, "without-ttl").containsKey("token"));
+    }
+
+    @Test
+    public void corsOriginsAreDerivedFromClientRedirectUris() throws Exception {
+        OAuth2Container container = new OAuth2Container()
+            .withOAuth2Client(new Client("frontend-client", "")
+                .withRedirectUris("http://localhost:5173/callback", "http://localhost:8080")
+                .withPostLogoutRedirectUris("http://app.local:3000/"));
+
+        List<String> origins = at(parse(container.generateConfigYaml()), "app", "cors", "allowed-origins");
+
+        assertEquals(Set.of("http://localhost:5173", "http://localhost:8080", "http://app.local:3000"),
+            Set.copyOf(origins));
+        assertEquals(3, origins.size());
+    }
+
+    @Test
+    public void usersOnlyConfigLeavesCorsDefaults() throws Exception {
+        OAuth2Container container = new OAuth2Container().withUser("admin", "secret", "ADMIN");
+
+        assertNull(at(parse(container.generateConfigYaml()), "app", "cors"));
     }
 
     private static Map<String, Object> clientEntry(OAuth2Container container, String clientId)

@@ -1,13 +1,25 @@
 spring:
   application:
     name: auth-server
-  config:
-    import: optional:classpath:/config/application.yaml
   security:
     oauth2:
       authorizationserver:
         issuer: http://localhost:9000
-        client: {}
+        # Default client for local development and docker-compose. Clients added via
+        # config/application.yaml (e.g. by OAuth2Container) are merged with this map.
+        client:
+          frontend-client:
+            require-proof-key: true
+            registration:
+              client-id: frontend-client
+              client-authentication-methods: [none]
+              authorization-grant-types: [authorization_code]
+              redirect-uris: [http://localhost:8080, http://localhost:5173]
+              post-logout-redirect-uris: [http://localhost:8080, http://localhost:5173]
+              scopes: [openid, profile, email]
+            token:
+              access-token-time-to-live: 1h
+              refresh-token-time-to-live: 7d
 
 server:
   port: 9000
@@ -17,3 +29,5 @@ server:
 app:
   security:
     users: []
+  cors:
+    allowed-origins: [http://localhost:8080, http://localhost:5173]
