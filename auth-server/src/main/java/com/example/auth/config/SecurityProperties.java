@@ -1,5 +1,7 @@
 package com.example.auth.config;
 
+import static org.apache.commons.collections4.ListUtils.emptyIfNull;
+
 import java.util.List;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
@@ -8,7 +10,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public record SecurityProperties(List<User> users) {
 
   public SecurityProperties {
-    users = users == null ? List.of() : List.copyOf(users);
+    users = emptyIfNull(users);
   }
 
   /**
@@ -18,7 +20,7 @@ public record SecurityProperties(List<User> users) {
   public record User(String username, String password, List<String> roles) {
 
     public User {
-      roles = roles == null ? List.of() : List.copyOf(roles);
+      roles = emptyIfNull(roles);
     }
 
     @Override

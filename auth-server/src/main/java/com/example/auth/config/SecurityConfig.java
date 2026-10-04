@@ -25,6 +25,8 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import static org.springframework.security.config.Customizer.withDefaults;
+
 @Slf4j
 @Configuration
 @EnableWebSecurity
@@ -36,11 +38,11 @@ public class SecurityConfig {
     http.oauth2AuthorizationServer((authorizationServer) -> {
           // Match all authorization server endpoints, including OIDC /connect/logout and /userinfo
           http.securityMatcher(authorizationServer.getEndpointsMatcher());
-          authorizationServer.oidc(Customizer.withDefaults());
+          authorizationServer.oidc(withDefaults());
         })
         // Require an authenticated user so anonymous authorization requests trigger the login entry point
         .authorizeHttpRequests((authorize) -> authorize.anyRequest().authenticated())
-        .cors(Customizer.withDefaults())
+        .cors(withDefaults())
         // Redirect to the login page when not authenticated from the authorization endpoint
         .exceptionHandling(
             (exceptions) ->
@@ -48,7 +50,7 @@ public class SecurityConfig {
                     new LoginUrlAuthenticationEntryPoint("/login"),
                     new MediaTypeRequestMatcher(MediaType.TEXT_HTML)))
         // Accept access tokens for User Info and/or Client Registration
-        .oauth2ResourceServer((resourceServer) -> resourceServer.jwt(Customizer.withDefaults()));
+        .oauth2ResourceServer((resourceServer) -> resourceServer.jwt(withDefaults()));
 
     return http.build();
   }
@@ -56,11 +58,11 @@ public class SecurityConfig {
   @Bean
   @Order(2)
   public SecurityFilterChain apiSecurityFilterChain(HttpSecurity http) throws Exception {
-    http.cors(Customizer.withDefaults())
+    http.cors(withDefaults())
         .authorizeHttpRequests(authorize -> authorize
             .requestMatchers("/actuator/**").permitAll()
             .anyRequest().authenticated())
-        .formLogin(Customizer.withDefaults());
+        .formLogin(withDefaults());
     return http.build();
   }
 
