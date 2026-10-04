@@ -92,6 +92,22 @@ public class ConfigFileAuthFlowIT {
   }
 
   @Test
+  public void defaultFrontendClientIsKeptAlongsideConfigFileClients() throws Exception {
+    // Clients merge by key, so the bundled frontend-client stays registered
+    String authorizationUrl = container.getAuthServerUrl() + "/oauth2/authorize?" +
+      "response_type=code&" +
+      "client_id=frontend-client&" +
+      "scope=openid&" +
+      "redirect_uri=http://localhost:8080&" +
+      "code_challenge=" + generateCodeChallenge("test-verifier") + "&" +
+      "code_challenge_method=S256";
+
+    HtmlPage page = webClient.getPage(authorizationUrl);
+
+    assertTrue(page.getUrl().toString().endsWith("/login"), page.getUrl().toString());
+  }
+
+  @Test
   public void configFileClientCanRequestToken() throws Exception {
     String baseUrl = container.getAuthServerUrl();
     RestClient restClient = RestClient.create();

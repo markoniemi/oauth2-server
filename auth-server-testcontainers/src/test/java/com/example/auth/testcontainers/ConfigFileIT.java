@@ -46,28 +46,6 @@ public class ConfigFileIT {
   }
 
   @Test
-  public void fluentApiAndConfigFileMixed() {
-    OAuth2Container container = new OAuth2Container()
-        .withConfigFile("test-config.yaml")
-        .withUser("extra-user", "password", "EXTRA_ROLE")
-        .withOAuth2Client(new Client("api-client", "secret")
-          .withScopes("api")
-          .withRedirectUris("http://api.example.com/callback"));
-
-    // getUsers/getClients only reflect fluent API (not mounted config file)
-    assertEquals(1, container.getUsers().size());
-    assertEquals(1, container.getClients().size());
-
-    container.start();
-    try {
-      // Container has both: config file users/clients + fluent API users/clients
-      assertTrue(container.isRunning());
-    } finally {
-      container.stop();
-    }
-  }
-
-  @Test
   public void configFileLoadsUserAndClientConfig() {
     OAuth2Container container = new OAuth2Container()
         .withConfigFile("test-config.yaml");

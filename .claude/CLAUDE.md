@@ -41,7 +41,7 @@ A Spring Boot 4.0.3 (Spring Security 7) OAuth2 Authorization Server with:
 - **OpenID Connect** discovery endpoint
 - **JWT token** generation
 - **Form login** authentication
-- **Custom user/role** management via YAML or fluent API
+- **Custom user/role** management via YAML
 
 ### Modules
 `auth-server` (Spring Boot app + Docker image) and `auth-server-testcontainers` (library, artifact `com.example:auth-server-testcontainers`). The library never depends on server code; they share only Spring property names.
@@ -49,8 +49,7 @@ A Spring Boot 4.0.3 (Spring Security 7) OAuth2 Authorization Server with:
 ### TestContainers Integration
 Reusable library for testing downstream applications:
 - Spin up auth server in Docker during tests
-- Fluent builder API for user and client configuration
-- YAML file support for complex setups
+- Bundled server defaults, overridden by a YAML config file
 - Custom issuer URL and context path support
 - Full lifecycle management
 
@@ -58,7 +57,7 @@ Reusable library for testing downstream applications:
 
 **OAuth2Container** — Main entry point. Extends `GenericContainer<OAuth2Container>` to manage the Docker container lifecycle and configuration.
 
-**Client & User** — `Client` is a fluent builder class (`with*` methods), `User` is a record; both validate in their constructors (`IllegalArgumentException`).
+**Config file** — Users and clients are configured only through `withConfigFile`, which mounts a Spring Boot YAML as the server's `config/application.yaml`. It overrides the server's bundled `application.yaml` defaults (maps merge by key, single values and lists are replaced).
 
 **Server configuration** — Spring Boot auto-configuration registers clients from `spring.security.oauth2.authorizationserver.client.*`; `SecurityConfig` adds filter chains, users (`app.security.users`) and CORS (`app.cors.allowed-origins`).
 

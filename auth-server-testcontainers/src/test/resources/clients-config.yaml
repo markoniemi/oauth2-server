@@ -1,0 +1,29 @@
+app:
+  security:
+    users:
+      - username: admin
+        password: admin123
+        roles:
+          - ADMIN
+
+spring:
+  security:
+    oauth2:
+      authorizationserver:
+        client:
+          test-client:
+            registration:
+              client-id: test-client
+              client-secret: test-secret
+              client-authentication-methods:
+                - client_secret_basic
+              authorization-grant-types:
+                - authorization_code
+                - client_credentials
+              redirect-uris:
+                - http://localhost:8080/callback
+              scopes:
+                - openid
+                - profile
+                - api
+            require-proof-key: false

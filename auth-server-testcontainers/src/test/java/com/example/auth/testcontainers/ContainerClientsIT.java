@@ -20,13 +20,7 @@ public class ContainerClientsIT {
   @BeforeAll
   static void setUp() {
     container = new OAuth2Container()
-        .withUser("admin", "admin123", "ADMIN")
-        .withOAuth2Client(
-        new Client("test-client", "test-secret")
-            .withRedirectUris("http://localhost:8080/callback")
-            .withScopes("openid", "profile", "api")
-            .withGrantTypes("authorization_code", "client_credentials")
-      );
+        .withConfigFile("clients-config.yaml");
     container.start();
   }
 

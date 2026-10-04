@@ -1,6 +1,6 @@
 # OAuth2 Authorization Server
 
-A Spring Boot 3.5.6 OAuth2 Authorization Server with integrated TestContainers support for testing downstream applications.
+A Spring Boot 4.0.3 OAuth2 Authorization Server with integrated TestContainers support for testing downstream applications.
 
 ## Quick Start
 
@@ -31,12 +31,7 @@ A public `frontend-client` (PKCE, redirect URIs `http://localhost:8080` and `htt
 @BeforeAll
 static void setUp() {
     container = new OAuth2Container()
-        .withUser("testuser", "testpass", "USER")
-        .withOAuth2Client(
-            new Client("client-id", "client-secret")
-                .withRedirectUris("http://localhost:8080/callback")
-                .withScopes("openid", "profile")
-        );
+        .withConfigFile("oauth2-server.yaml");  // users and clients, overrides the bundled defaults
     container.start();
 }
 
@@ -60,8 +55,7 @@ String authServerUrl = container.getAuthServerUrl();
 
 ### TestContainers Integration
 - Spin up auth server in Docker during tests
-- Fluent API for configuration
-- User and OAuth2 client registration
+- Bundled defaults (public `frontend-client`), overridden by a Spring Boot config file
 - Custom issuer URL and context path support
 
 ## Architecture
@@ -82,11 +76,9 @@ auth-server/                         # Spring Boot app, Docker image (jib)
     └── config/SecurityConfigTest.java
 auth-server-testcontainers/          # Testcontainers library (no server code)
 ├── src/main/java/com/example/auth/testcontainers/
-│   ├── OAuth2Container.java
-│   ├── Client.java
-│   └── User.java
+│   └── OAuth2Container.java
 ├── src/test/java/com/example/auth/testcontainers/   # *IT run against the image built by auth-server
-└── src/test/resources/test-config.yaml
+└── src/test/resources/                              # config files mounted by the ITs
 ```
 
 `auth-server` is listed first in the reactor: it builds the image (`jib:dockerBuild`, pre-integration-test) that the library's integration tests start.
@@ -106,7 +98,7 @@ mvn -pl auth-server-testcontainers verify -Dit.test=ContainerIT
 ### Test Coverage
 
 - `auth-server`: 5 unit tests (users, password encoding) + 5 integration tests (auth code + PKCE, logout)
-- `auth-server-testcontainers`: 25 unit tests (generated config, `Client`, `User`) + 21 integration tests against the container
+- `auth-server-testcontainers`: 20 integration tests against the container (bundled defaults, config files, issuer and context path)
 
 ## Requirements
 
@@ -116,7 +108,7 @@ mvn -pl auth-server-testcontainers verify -Dit.test=ContainerIT
 
 ## Technologies
 
-- Spring Boot 3.5.6
+- Spring Boot 4.0.3
 - Spring Security OAuth2 Authorization Server
 - Spring Web
 - Jackson (with YAML support)
@@ -132,36 +124,11 @@ mvn -pl auth-server-testcontainers verify -Dit.test=ContainerIT
 - **POST** `/login` — Login form submission
 - **GET** `/login` — Login page
 
-## Development Guidelines
-
-See [.github/copilot-instructions.md](.github/copilot-instructions.md) for:
-- Coding conventions and patterns
-- Error handling standards (RFC 7807)
-- Validation framework usage
-- Git commit message format
-
 ## Project Structure
 
-This is a monolithic Spring Boot application containing:
-- **Backend**: Java/Spring Boot OAuth2 Authorization Server
-- **Database**: PostgreSQL (prod) / H2 (test)
-- **Authentication**: OAuth2 with Spring Security
-
-## Git Workflow
-
-Commit messages use a **one-line format with semicolons**:
-```
-Brief action; additional change; optional note
-```
-
-Example:
-```
-Add OAuth2TestContainers library; support fluent builder and YAML config
-```
-
-## License
-
-Part of the oauth2-server project.
+A multi-module Maven project:
+- **auth-server**: Spring Boot OAuth2 Authorization Server, packaged as a Docker image
+- **auth-server-testcontainers**: Testcontainers library for running the server in downstream tests
 
 ## More Information
 

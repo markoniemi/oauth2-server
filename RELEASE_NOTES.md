@@ -1,3 +1,23 @@
+# Unreleased
+
+## Breaking: Testcontainers library configured by config file only
+
+`auth-server-testcontainers` no longer has a fluent API. `OAuth2Container.withUser`,
+`withOAuth2Client`, `getUsers`, `getClients` and the `Client` and `User` classes are removed.
+
+- Users and clients go in a Spring Boot YAML passed to `withConfigFile`. It overrides the server's
+  bundled defaults (a public `frontend-client`, CORS for `localhost:8080`/`5173`, no users): maps
+  merge by key, single values and lists are replaced.
+- `withIssuerUrl` and `withContextPath` are unchanged.
+- The library no longer pulls in `jackson-dataformat-yaml` or Lombok.
+
+Migration: move each `withUser` / `new Client(...)` into the YAML, see
+[docs/OAuth2TestContainersUsage.md](docs/OAuth2TestContainersUsage.md). The library no longer
+applies public-client rules for you: set `client-authentication-methods: [none]`,
+`require-proof-key: true` and omit `refresh_token` yourself, and list `app.cors.allowed-origins`.
+
+---
+
 # OAuth2 Authorization Server v4.0.3 Release Notes
 
 **Release Date**: 2026-09-29  

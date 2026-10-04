@@ -10,6 +10,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.client.RestClient;
 
+import java.security.MessageDigest;
+import java.util.Base64;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -21,12 +23,8 @@ public class ContainerAuthFlowIT {
 
   @BeforeAll
   static void setUp() {
-    container = new OAuth2Container()
-        .withOAuth2Client(
-        new Client("test-frontend", "client-secret")
-            .withRedirectUris("http://localhost:8080/callback")
-            .withScopes("openid", "profile")
-      );
+    // Bundled server defaults only: the public frontend-client
+    container = new OAuth2Container();
     container.start();
   }
 
@@ -50,10 +48,12 @@ public class ContainerAuthFlowIT {
     String baseUrl = container.getAuthServerUrl();
     String authorizationUrl = baseUrl + "/oauth2/authorize?" +
       "response_type=code&" +
-      "client_id=test-frontend&" +
+      "client_id=frontend-client&" +
       "scope=openid%20profile&" +
-      "redirect_uri=http://localhost:8080/callback&" +
-      "state=test-state";
+      "redirect_uri=http://localhost:8080&" +
+      "state=test-state&" +
+      "code_challenge=" + generateCodeChallenge("test-verifier") + "&" +
+      "code_challenge_method=S256";
 
     // Navigate to authorization endpoint without authentication
     Page page = webClient.getPage(authorizationUrl);
@@ -86,6 +86,12 @@ public class ContainerAuthFlowIT {
     assertTrue(discovery.containsKey("issuer"), "Should have issuer");
     assertTrue(discovery.containsKey("authorization_endpoint"), "Should have authorization_endpoint");
     assertTrue(discovery.containsKey("token_endpoint"), "Should have token_endpoint");
+  }
+
+  private String generateCodeChallenge(String codeVerifier) throws Exception {
+    MessageDigest digest = MessageDigest.getInstance("SHA-256");
+    byte[] hash = digest.digest(codeVerifier.getBytes());
+    return Base64.getUrlEncoder().withoutPadding().encodeToString(hash);
   }
 
 }
