@@ -73,12 +73,30 @@ public class AuthServerIT {
         "code_challenge_method=S256";
 
     webClient.getOptions().setRedirectEnabled(false);
-    Page response = webClient.getPage(authUrl);
-    WebResponse webResponse = response.getWebResponse();
+    WebResponse webResponse = webClient.getPage(authUrl).getWebResponse();
 
     assertThat(webResponse.getStatusCode()).isEqualTo(302);
     String location = webResponse.getResponseHeaderValue("Location");
     assertThat(location).contains("/login");
+  }
+
+  @Test
+  public void performAuthorizationRequestWithoutCodeChallengeIsRejected() throws Exception {
+    String authUrl = baseUrl + "/oauth2/authorize?" +
+        "response_type=code&" +
+        "client_id=frontend-client&" +
+        "scope=openid&" +
+        "redirect_uri=http://localhost:5173&" +
+        "state=state&" +
+        "nonce=nonce123";
+
+    webClient.getOptions().setRedirectEnabled(false);
+    WebResponse webResponse = webClient.getPage(authUrl).getWebResponse();
+
+    assertThat(webResponse.getStatusCode()).isEqualTo(302);
+    String location = webResponse.getResponseHeaderValue("Location");
+    assertThat(location).startsWith("http://localhost:5173");
+    assertThat(location).contains("error=invalid_request");
   }
 
   @Test
