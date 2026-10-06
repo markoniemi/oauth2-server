@@ -6,7 +6,7 @@
 
 ## Goal
 
-Lean on Spring Boot 4's authorization server auto-configuration instead of hand-written beans, fix the bugs this hides, and make hard-coded values configurable. Each phase is independently shippable and must be validated against dynamic-form before the next one starts.
+Lean on Spring Boot 4's authorization server autclo-configuration instead of hand-written beans, fix the bugs this hides, and make hard-coded values configurable. Each phase is independently shippable and must be validated against dynamic-form before the next one starts.
 
 ## Key findings driving this plan
 

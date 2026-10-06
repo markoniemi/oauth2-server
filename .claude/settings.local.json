@@ -21,7 +21,9 @@
       "Bash(curl *)",
       "Bash(docker stop *)",
       "Bash(docker rm *)",
-      "Bash(docker run *)"
+      "Bash(docker run *)",
+      "PowerShell(Get-Content *)",
+      "PowerShell(mvn *)"
     ]
   }
 }
