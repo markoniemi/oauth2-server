@@ -11,7 +11,7 @@ Library artifact `com.example:auth-server-testcontainers`. `OAuth2Container` ext
 
 **Core principle:** the library never depends on server code. The only contract with `auth-server` is Spring property names and the image. It is a public API: keep it backward compatible.
 
-Full user guide: `docs/OAuth2TestContainersUsage.md`. Config file details: `docs/ConfigFileSupport.md`.
+Full user guide, including bundled defaults and config file merge rules: `docs/OAuth2TestContainersUsage.md`.
 
 ## API
 
