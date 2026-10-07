@@ -7,15 +7,16 @@ This document provides development guidelines for this OAuth2 Authorization Serv
 - **Start here**: [README.md](../README.md) — Project overview, quick start, and architecture
 - **Testing guide**: [OAuth2TestContainersUsage.md](../docs/OAuth2TestContainersUsage.md) — Complete API reference for TestContainers integration
 - **Tech details**: [docs/TechSpec.md](../docs/TechSpec.md) — Auth server architecture and configuration
-- **Code standards**: [.github/copilot-instructions.md](../.github/copilot-instructions.md) — Coding conventions and development standards
+- **Skills**: `.claude/skills/` — `oauth2-server-backend` (auth-server module), `oauth2-server-testcontainers` (library), `oauth2-server-review` (coding standards checklist), `test`, `test-all`
 
 ## Integration with Dynamic-Form Project
 
-This OAuth2 Authorization Server is used as the authentication provider for the [dynamic-form](../../../dynamic-form) project. **Any changes to this project must be tested with the dynamic-form application** to ensure compatibility, especially when modifying:
+This OAuth2 Authorization Server is used as the authentication provider for the [dynamic-form](../../dynamic-form) project, which runs the Docker image in docker-compose and uses `OAuth2Container` in its tests (`TestcontainersConfig`). **Any changes to this project must be tested with the dynamic-form application** to ensure compatibility, especially when modifying:
 - Token generation and JWT claims
 - OIDC discovery endpoints
 - Client authentication flows
 - User/role management
+- `OAuth2Container` public API and Spring property names used in config files
 
 Always validate changes in the dynamic-form test suite or local environment before committing.
 
@@ -60,9 +61,6 @@ Reusable library for testing downstream applications:
 **Config file** — Users and clients are configured only through `withConfigFile`, which mounts a Spring Boot YAML as the server's `config/application.yaml`. It overrides the server's bundled `application.yaml` defaults (maps merge by key, single values and lists are replaced).
 
 **Server configuration** — Spring Boot auto-configuration registers clients from `spring.security.oauth2.authorizationserver.client.*`; `SecurityConfig` adds filter chains, users (`app.security.users`) and CORS (`app.cors.allowed-origins`).
-
-For detailed information about coding conventions and development practices, refer to the [Copilot Instructions](../.github/copilot-instructions.md).
-
 ## Git Commit Messages
 
 Commit messages use a **one-line format with semicolons** to separate concerns:
