@@ -21,7 +21,7 @@ Not run: build and tests. Not read: `README.md`, `docs/*.md`, skill files, `.cla
   - It is used only for `emptyIfNull`.
   - Fix: write `users = users == null ? List.of() : users;` (same for the other two lists). Remove the dependency from `auth-server/pom.xml` and the version pin from the parent `pom.xml`.
 
-- [ ] **4. Clean `logback-spring.xml`** (`logback-spring.xml:4,15-18`)
+- [x] **4. Clean `logback-spring.xml`** (`logback-spring.xml:4,15-18`)
   - It silences `com.gargoylesoftware` and `DefaultCssErrorHandler` (HtmlUnit, a test library) and `org.hibernate` (not in the project). The `defaults.xml` include does nothing.
   - Fix: delete the file and keep the levels in `application.yaml` under `logging.level`. Or delete only those lines.
 
