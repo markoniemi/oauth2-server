@@ -10,7 +10,7 @@ Not run: build and tests. Not read: `README.md`, `docs/*.md`, skill files, `.cla
   - No test covers it. A change to `.cors(withDefaults())` or the allowed-origins config would pass every test and break the browser app.
   - Fix: add one IT. Send `OPTIONS /oauth2/token` with `Origin: http://localhost:5173` and check for `Access-Control-Allow-Origin`. Send it again with an unknown origin and check it is refused.
 
-- [ ] **2. Limit `/actuator/**` to health** (`SecurityConfig.java:56`)
+- [x] **2. Limit `/actuator/**` to health** (`SecurityConfig.java:56`)
   - The second filter chain makes every actuator endpoint public. Only `health` is exposed today, so it is harmless.
   - A user can set `management.endpoints.web.exposure.include=*` in the config file. Then `env`, `heapdump` and `beans` are readable by anyone, and client secrets are stored in plain text.
   - Fix: `.requestMatchers("/actuator/health/**").permitAll()`. The container and CI only use `/actuator/health`.

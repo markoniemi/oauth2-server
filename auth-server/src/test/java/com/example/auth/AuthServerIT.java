@@ -55,6 +55,14 @@ public class AuthServerIT {
   }
 
   @Test
+  public void actuatorEndpointsOtherThanHealthRequireAuthentication() throws Exception {
+    webClient.getOptions().setRedirectEnabled(false);
+    Page response = webClient.getPage(baseUrl + "/actuator/info");
+    // Not public: login redirect or 401/403, not the 404 an unexposed but permitted endpoint gives
+    assertThat(response.getWebResponse().getStatusCode()).isIn(302, 401, 403);
+  }
+
+  @Test
   public void performDiscoveryCheck() throws Exception {
     Page response = webClient.getPage(baseUrl + "/.well-known/openid-configuration");
     assertThat(response.getWebResponse().getStatusCode()).isEqualTo(200);

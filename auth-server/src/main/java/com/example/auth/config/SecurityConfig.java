@@ -60,7 +60,7 @@ public class SecurityConfig {
   public SecurityFilterChain apiSecurityFilterChain(HttpSecurity http) throws Exception {
     http.cors(withDefaults())
         .authorizeHttpRequests(authorize -> authorize
-            .requestMatchers("/actuator/**").permitAll()
+            .requestMatchers("/actuator/health/**").permitAll()
             .anyRequest().authenticated())
         .formLogin(withDefaults());
     return http.build();
