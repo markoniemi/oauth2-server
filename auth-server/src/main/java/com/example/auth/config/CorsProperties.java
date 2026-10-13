@@ -1,7 +1,5 @@
 package com.example.auth.config;
 
-import static org.apache.commons.collections4.ListUtils.emptyIfNull;
-
 import java.util.List;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
@@ -10,6 +8,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public record CorsProperties(List<String> allowedOrigins) {
 
   public CorsProperties {
-    allowedOrigins = emptyIfNull(allowedOrigins);
+    allowedOrigins = allowedOrigins == null ? List.of() : allowedOrigins;
   }
 }

@@ -17,7 +17,7 @@ Not run: build and tests. Not read: `README.md`, `docs/*.md`, skill files, `.cla
 
 ## Nice to have
 
-- [ ] **3. Drop `commons-collections4`** (`CorsProperties.java:14`, `SecurityProperties.java:14,22`)
+- [x] **3. Drop `commons-collections4`** (`CorsProperties.java:14`, `SecurityProperties.java:14,22`)
   - It is used only for `emptyIfNull`.
   - Fix: write `users = users == null ? List.of() : users;` (same for the other two lists). Remove the dependency from `auth-server/pom.xml` and the version pin from the parent `pom.xml`.
 
