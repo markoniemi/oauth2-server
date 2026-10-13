@@ -1,6 +1,8 @@
 package com.example.auth.config;
 
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
@@ -9,6 +11,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.http.MediaType;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -16,6 +19,9 @@ import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.DelegatingPasswordEncoder;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.server.authorization.OAuth2TokenType;
+import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
+import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
@@ -77,6 +83,20 @@ public class SecurityConfig {
     log.debug("Users ({}): {}", users.size(), securityProperties.users());
 
     return new InMemoryUserDetailsManager(users);
+  }
+
+  /** Adds the user's roles (e.g. {@code ROLE_ADMIN}) to access tokens as a {@code roles} claim. */
+  @Bean
+  public OAuth2TokenCustomizer<JwtEncodingContext> rolesClaimCustomizer() {
+    return context -> {
+      if (OAuth2TokenType.ACCESS_TOKEN.equals(context.getTokenType())) {
+        Set<String> roles = context.getPrincipal().getAuthorities().stream()
+            .map(GrantedAuthority::getAuthority)
+            .filter(authority -> authority.startsWith("ROLE_"))
+            .collect(Collectors.toSet());
+        context.getClaims().claim("roles", roles);
+      }
+    };
   }
 
   /**

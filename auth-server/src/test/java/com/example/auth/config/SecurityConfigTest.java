@@ -3,10 +3,18 @@ package com.example.auth.config;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.server.authorization.OAuth2TokenType;
+import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
+import org.springframework.security.oauth2.jwt.JwsHeader;
+import org.springframework.security.oauth2.jwt.JwtClaimsSet;
+import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
 
 class SecurityConfigTest {
 
@@ -49,6 +57,45 @@ class SecurityConfigTest {
   void userToStringHidesPassword() {
     assertThat(new SecurityProperties.User("admin", "top-secret", List.of("USER")).toString())
         .doesNotContain("top-secret");
+  }
+
+  @Test
+  void accessTokenGetsRolesClaim() {
+    JwtEncodingContext context =
+        encodingContext(OAuth2TokenType.ACCESS_TOKEN, "ROLE_ADMIN", "ROLE_USER");
+
+    securityConfig.rolesClaimCustomizer().customize(context);
+
+    assertThat(context.getClaims().build().<Object>getClaim("roles"))
+        .isEqualTo(Set.of("ROLE_ADMIN", "ROLE_USER"));
+  }
+
+  @Test
+  void userWithoutAdminRoleGetsNoAdminClaim() {
+    JwtEncodingContext context = encodingContext(OAuth2TokenType.ACCESS_TOKEN, "ROLE_USER");
+
+    securityConfig.rolesClaimCustomizer().customize(context);
+
+    assertThat(context.getClaims().build().<Object>getClaim("roles"))
+        .isEqualTo(Set.of("ROLE_USER"));
+  }
+
+  @Test
+  void refreshTokenGetsNoRolesClaim() {
+    JwtEncodingContext context = encodingContext(OAuth2TokenType.REFRESH_TOKEN, "ROLE_ADMIN");
+
+    securityConfig.rolesClaimCustomizer().customize(context);
+
+    assertThat(context.getClaims().build().hasClaim("roles")).isFalse();
+  }
+
+  private static JwtEncodingContext encodingContext(OAuth2TokenType type, String... authorities) {
+    return JwtEncodingContext.with(
+            JwsHeader.with(SignatureAlgorithm.RS256), JwtClaimsSet.builder().subject("u"))
+        .tokenType(type)
+        .principal(new UsernamePasswordAuthenticationToken(
+            "u", "p", AuthorityUtils.createAuthorityList(authorities)))
+        .build();
   }
 
   private UserDetails load(SecurityProperties.User user) {

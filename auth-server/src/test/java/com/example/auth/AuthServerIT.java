@@ -10,7 +10,9 @@ import com.gargoylesoftware.htmlunit.html.HtmlButton;
 import com.gargoylesoftware.htmlunit.html.HtmlInput;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
 import java.util.Map;
+import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -114,6 +116,19 @@ public class AuthServerIT {
     assertThat(tokenMap).containsKey("access_token");
     assertThat(tokenMap).containsKey("id_token");
     assertThat(tokenMap.get("token_type")).isEqualTo("Bearer");
+  }
+
+  @Test
+  public void accessTokenCarriesUserRoles() throws Exception {
+    Map<String, Object> tokenMap = authenticateAndRequestTokens();
+
+    String payload = ((String) tokenMap.get("access_token")).split("\\.")[1];
+    @SuppressWarnings("unchecked")
+    Map<String, Object> claims =
+        new ObjectMapper().readValue(Base64.getUrlDecoder().decode(payload), Map.class);
+
+    assertThat(claims.get("roles")).asInstanceOf(InstanceOfAssertFactories.LIST)
+        .containsExactlyInAnyOrder("ROLE_USER", "ROLE_ADMIN");
   }
 
   @Test
