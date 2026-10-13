@@ -25,7 +25,7 @@ Not run: build and tests. Not read: `README.md`, `docs/*.md`, skill files, `.cla
   - It silences `com.gargoylesoftware` and `DefaultCssErrorHandler` (HtmlUnit, a test library) and `org.hibernate` (not in the project). The `defaults.xml` include does nothing.
   - Fix: delete the file and keep the levels in `application.yaml` under `logging.level`. Or delete only those lines.
 
-- [ ] **5. Remove unused import** (`SecurityConfig.java:10`)
+- [x] **5. Remove unused import** (`SecurityConfig.java:10`)
   - `import ...config.Customizer;` is unused. Only the static `Customizer.withDefaults` is used.
 
 - [ ] **6. Run the image as non-root** (`auth-server/pom.xml`, jib `<from>`)
