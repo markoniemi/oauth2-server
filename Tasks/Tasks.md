@@ -28,7 +28,7 @@ Not run: build and tests. Not read: `README.md`, `docs/*.md`, skill files, `.cla
 - [x] **5. Remove unused import** (`SecurityConfig.java:10`)
   - `import ...config.Customizer;` is unused. Only the static `Customizer.withDefaults` is used.
 
-- [ ] **6. Run the image as non-root** (`auth-server/pom.xml`, jib `<from>`)
+- [ ] **6. Run the image as non-root** — SKIPPED: `:nonroot` broke config-file ITs (users/clients from mounted `/config/application.yaml` not applied); find cause first (`auth-server/pom.xml`, jib `<from>`)
   - Fix: use `gcr.io/distroless/java21-debian12:nonroot`.
 
 ## Lean
